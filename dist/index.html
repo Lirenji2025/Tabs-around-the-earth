@@ -8,6 +8,7 @@
   <title>ORBIT — 你的世界，正在轨道上</title>
   <link rel="icon" type="image/svg+xml" href="./assets/orbit.svg">
   <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./v2.css">
 </head>
 <body>
   <div id="app">
@@ -22,8 +23,7 @@
       <a class="wordmark" href="./" aria-label="ORBIT 首页"><span class="orbit-mark"></span>ORBIT<span class="wordmark-dot">®</span></a>
       <div class="view-label"><span class="tiny-star">✦</span> A LITTLE SPACE FOR YOUR WORLD</div>
       <div class="top-actions">
-        <button class="icon-button" id="sound-button" aria-label="关闭声效" aria-pressed="true" title="声效开启"><svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path class="sound-waves" d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg></button>
-        <button class="icon-button" id="settings-button" aria-label="轨道设置" aria-expanded="false" title="轨道设置"><svg viewBox="0 0 24 24"><path d="M5 4v16m7-16v16m7-16v16M2 8h6m1 8h6m1-8h6"/></svg></button>
+        <button class="icon-button" id="settings-button" aria-label="打开设置与管理" aria-expanded="false" title="设置与管理"><svg viewBox="0 0 24 24"><path d="m9 3-.6 2.2-2 .9-2-.6-2 3.4 1.5 1.6v2.3L2.4 15l2 3.5 2-.6 2 .9L9 21h4l.6-2.2 2-.9 2 .6 2-3.5-1.5-1.6v-2.3l1.5-1.5-2-3.5-2 .6-2-.9L13 3Z"/><circle cx="11" cy="12" r="3"/></svg></button>
         <div class="time-block"><span id="clock">00:00</span><span id="date">SUNDAY, NOV 01</span></div>
       </div>
     </header>
@@ -36,37 +36,49 @@
 
     <aside class="side-label"><span>01</span><i></i><span>ORBITAL VIEW</span></aside>
     <div class="planet-caption"><span class="caption-cross">+</span><div><strong>EARTH</strong><span>我们的起点，也是归处。</span></div><span class="coordinate">23.4° AXIAL TILT</span></div>
+    <div id="group-caption" hidden><span class="eyebrow">CONSTELLATION</span><h2 id="group-title"></h2><button id="collapse-group">收起星群 <span>↙</span></button><small>点击空白处返回 · 拖到另一张卡片上可继续建组</small></div>
+    <div id="layout-caption" aria-live="polite"><span class="layout-dot"></span><span id="layout-name">球形轨道</span><small id="layout-tip">地球附近上滚，收束成一行</small></div>
 
     <section class="search-area" aria-label="搜索与探索">
       <div class="search-intro"><i></i><span>下一个世界，从这里开始</span><i></i></div>
       <form id="search-form" autocomplete="off">
         <svg class="search-icon" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg>
+        <div class="favorite-anchor" id="favorite-anchor"><button id="favorites-button" type="button" aria-label="打开收藏夹" aria-expanded="false" title="收藏夹"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="m12 10 1.2 2.4 2.6.4-1.9 1.8.5 2.6-2.4-1.3-2.4 1.3.5-2.6-1.9-1.8 2.6-.4Z"/></svg><span id="favorites-count" hidden></span></button><section id="favorites-popover" class="glass-panel" aria-label="收藏的网页" hidden><div class="favorites-heading"><span>收藏夹</span><button id="manage-favorites" type="button">管理 ↗</button></div><div id="favorites-list"></div></section></div>
         <input id="search-input" aria-label="搜索网页或输入网址" placeholder="搜索，或输入一个新的世界…" maxlength="200">
         <button id="engine-button" type="button" aria-label="选择搜索引擎" aria-expanded="false">Bing <span>⌄</span></button>
         <button class="search-submit" type="submit" aria-label="搜索并进入新标签页"><svg viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button>
       </form>
       <div class="engine-menu" id="engine-menu" hidden><button data-engine="Bing">Bing <span>默认</span></button><button data-engine="Google">Google</button><button data-engine="DuckDuckGo">DuckDuckGo</button></div>
-      <div class="interaction-hints"><span><svg viewBox="0 0 16 16"><path d="M6 2h4a2 2 0 0 1 2 2v7a4 4 0 0 1-8 0V4a2 2 0 0 1 2-2Zm2 0v5"/></svg>拖动旋转</span><i></i><span>悬停聚焦</span><i></i><span>点击进入</span><i></i><span>右键消散</span></div>
+      <div class="interaction-hints"><span>拖动旋转</span><i></i><span>滚轮收束 / 缩放</span><i></i><span>拖停 ½ 秒建组</span><i></i><span>右键管理</span></div>
     </section>
 
-    <footer class="bottom-bar"><span class="demo-label"><span class="hollow-dot"></span>交互原型 · 示例标签页</span><div class="footer-actions"><button id="replay-button"><svg viewBox="0 0 20 20"><path d="M4 6a7 7 0 1 1-1 6M4 2v5h5"/></svg>重播入场</button><button class="help-button" id="help-button" aria-label="使用说明">?</button></div><span class="footer-signature">LESS TABS. MORE UNIVERSE.</span></footer>
+    <footer class="bottom-bar"><span class="demo-label"><span class="hollow-dot"></span>交互原型 · 示例标签页</span><div class="footer-actions"><button id="replay-button"><svg viewBox="0 0 20 20"><path d="M4 6a7 7 0 1 1-1 6M4 2v5h5"/></svg>重播入场</button><button id="skip-flight" hidden>跳过入场 ↗</button></div><span class="footer-signature">LESS TABS. MORE UNIVERSE.</span></footer>
 
-    <section class="settings-panel glass-panel" id="settings-panel" aria-label="轨道设置" hidden>
-      <div class="panel-heading"><span>轨道设置</span><span>FLIGHT CONTROL</span></div>
-      <label class="setting-row"><span><strong>自动公转</strong><small>让世界缓缓流动</small></span><input id="auto-orbit" type="checkbox" checked><span class="switch"></span></label>
-      <label class="setting-row"><span><strong>减少动态效果</strong><small>缩短飞行，保留交互</small></span><input id="reduce-motion" type="checkbox"><span class="switch"></span></label>
-      <button id="reset-button" class="reset-button">恢复全部示例标签页 <span>↺</span></button>
+    <section class="settings-panel glass-panel" id="settings-panel" aria-label="设置与管理" hidden>
+      <div class="panel-heading"><span>设置与管理</span><button id="close-settings" aria-label="关闭设置">×</button></div>
+      <nav class="settings-tabs" aria-label="管理分类"><button data-settings-tab="preferences" class="active" aria-pressed="true">偏好</button><button data-settings-tab="groups" aria-pressed="false">星群</button><button data-settings-tab="favorites" aria-pressed="false">收藏</button><button data-settings-tab="pins" aria-pressed="false">置顶</button></nav>
+      <div id="preferences-panel" class="settings-content">
+        <label class="setting-row"><span><strong>声效</strong><small>低频掠过 · 空灵铜管 · 电磁吸附</small></span><input id="sound-toggle" type="checkbox" checked><span class="switch"></span></label>
+        <label class="setting-row"><span><strong>自动公转</strong><small>球形轨道中，让世界缓缓流动</small></span><input id="auto-orbit" type="checkbox" checked><span class="switch"></span></label>
+        <label class="setting-row"><span><strong>减少动态效果</strong><small>缩短飞行，保留交互</small></span><input id="reduce-motion" type="checkbox"><span class="switch"></span></label>
+        <button id="help-button" class="settings-link">使用说明 <span>?</span></button>
+        <button id="reset-button" class="settings-link">恢复全部示例标签页 <span>↺</span></button>
+        <p class="settings-note">收藏与置顶会保存在当前浏览器。首次点击后可播放声效；戴上耳机会有更完整的空间感。</p>
+      </div>
+      <div id="groups-panel" class="settings-content" hidden></div><div id="favorites-panel" class="settings-content" hidden></div><div id="pins-panel" class="settings-content" hidden></div>
     </section>
+    <section id="context-menu" class="glass-panel" aria-label="标签页右键菜单" hidden></section>
+    <div id="grouping-banner" hidden><span>✦</span><span id="grouping-message">选择另一张卡片或星群，完成建组</span><button id="cancel-grouping">取消</button></div>
 
     <dialog id="help-dialog" class="glass-panel">
       <button class="dialog-close icon-button" aria-label="关闭使用说明">×</button><div class="eyebrow">WELCOME TO YOUR ORBIT</div><h2>把世界，握在手心。</h2>
-      <p>拖动地球周围的空白区域，探索不同方向的标签页。</p><div class="help-grid"><div><b>01 / 聚焦</b><p>悬停一张卡片，其他世界会放慢、暗下来。</p></div><div><b>02 / 进入</b><p>点击卡片，穿过微光进入示例页面。</p></div><div><b>03 / 告别</b><p>右键卡片，或点击 ×，让它化作星云。可以撤销。</p></div><div><b>04 / 探索</b><p>输入搜索词或网址，看新的世界从搜索框中诞生。</p></div></div><p class="help-note">这是网页原型，使用示例卡片。进入后可点击“打开真实网页”；真实浏览器标签页管理将在扩展版本中接入。</p><button class="primary-button" id="start-exploring">开始探索 <span>↗</span></button>
+      <p>拖动地球附近的空白区域，探索你的空间标签页。</p><div class="help-grid"><div><b>01 / 收束与聚焦</b><p>地球附近上滚，卡片收成静止横列；下滚恢复。悬停卡片时，滚轮只会轻微缩放它。</p></div><div><b>02 / 磁吸成组</b><p>按住卡片拖到另一张上面，停留半秒后自动建组。右键也可选择建组。</p></div><div><b>03 / 星群与管理</b><p>点击圆形星群，成员会分裂展开；点击空白或按 Esc 收起。右键可收藏、置顶、移出组或关闭。</p></div><div><b>04 / 新的世界</b><p>搜索框旁的收藏夹可悬停展开；点击收藏，新的卡片会分裂进入轨道。置顶卡片在横列右端完整显示。</p></div></div><p class="help-note">这是使用示例标签页的网页原型。所有铜管、磁吸和空间音效均为原创程序合成。进入后可打开真实网页。</p><button class="primary-button" id="start-exploring">开始探索 <span>↗</span></button>
     </dialog>
     <section id="destination" aria-label="已进入的标签页" hidden></section>
     <div id="flight-layer" aria-hidden="true"></div>
     <div id="toast" role="status" aria-live="polite" hidden><span id="toast-message"></span><button id="toast-undo" hidden>撤销</button></div>
     <div id="loading" aria-live="polite"><span class="orbit-mark"></span><span>正在唤醒你的宇宙…</span></div>
   </div>
-  <script type="module" src="./app.js"></script>
+  <script type="module" src="./orbit.js"></script>
 </body>
 </html>
