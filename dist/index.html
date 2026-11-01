@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#060a10">
+  <meta name="description" content="ORBIT — 把打开的世界，留在你的轨道里。一个可交互的星球标签页原型。">
+  <title>ORBIT — 你的世界，正在轨道上</title>
+  <link rel="icon" type="image/svg+xml" href="./assets/orbit.svg">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div id="app">
+    <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
+    <div id="universe" aria-label="拖动星空，旋转地球和标签页轨道">
+      <canvas id="space" aria-hidden="true"></canvas>
+      <div id="card-layer"></div>
+      <div id="planet-fallback" hidden><div class="fallback-planet"></div></div>
+    </div>
+
+    <header class="topbar">
+      <a class="wordmark" href="./" aria-label="ORBIT 首页"><span class="orbit-mark"></span>ORBIT<span class="wordmark-dot">®</span></a>
+      <div class="view-label"><span class="tiny-star">✦</span> A LITTLE SPACE FOR YOUR WORLD</div>
+      <div class="top-actions">
+        <button class="icon-button" id="sound-button" aria-label="关闭声效" aria-pressed="true" title="声效开启"><svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path class="sound-waves" d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg></button>
+        <button class="icon-button" id="settings-button" aria-label="轨道设置" aria-expanded="false" title="轨道设置"><svg viewBox="0 0 24 24"><path d="M5 4v16m7-16v16m7-16v16M2 8h6m1 8h6m1-8h6"/></svg></button>
+        <div class="time-block"><span id="clock">00:00</span><span id="date">SUNDAY, NOV 01</span></div>
+      </div>
+    </header>
+
+    <section class="greeting" aria-label="轨道概览">
+      <div class="eyebrow"><span class="status-light"></span><span id="orbit-status">YOUR PERSONAL ORBIT</span></div>
+      <h1>你的世界，<br><span>正在轨道上。</span></h1>
+      <p><span id="tab-count">12</span> 个未完待续，随时回来。</p>
+    </section>
+
+    <aside class="side-label"><span>01</span><i></i><span>ORBITAL VIEW</span></aside>
+    <div class="planet-caption"><span class="caption-cross">+</span><div><strong>EARTH</strong><span>我们的起点，也是归处。</span></div><span class="coordinate">23.4° AXIAL TILT</span></div>
+
+    <section class="search-area" aria-label="搜索与探索">
+      <div class="search-intro"><i></i><span>下一个世界，从这里开始</span><i></i></div>
+      <form id="search-form" autocomplete="off">
+        <svg class="search-icon" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg>
+        <input id="search-input" aria-label="搜索网页或输入网址" placeholder="搜索，或输入一个新的世界…" maxlength="200">
+        <button id="engine-button" type="button" aria-label="选择搜索引擎" aria-expanded="false">Bing <span>⌄</span></button>
+        <button class="search-submit" type="submit" aria-label="搜索并进入新标签页"><svg viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button>
+      </form>
+      <div class="engine-menu" id="engine-menu" hidden><button data-engine="Bing">Bing <span>默认</span></button><button data-engine="Google">Google</button><button data-engine="DuckDuckGo">DuckDuckGo</button></div>
+      <div class="interaction-hints"><span><svg viewBox="0 0 16 16"><path d="M6 2h4a2 2 0 0 1 2 2v7a4 4 0 0 1-8 0V4a2 2 0 0 1 2-2Zm2 0v5"/></svg>拖动旋转</span><i></i><span>悬停聚焦</span><i></i><span>点击进入</span><i></i><span>右键消散</span></div>
+    </section>
+
+    <footer class="bottom-bar"><span class="demo-label"><span class="hollow-dot"></span>交互原型 · 示例标签页</span><div class="footer-actions"><button id="replay-button"><svg viewBox="0 0 20 20"><path d="M4 6a7 7 0 1 1-1 6M4 2v5h5"/></svg>重播入场</button><button class="help-button" id="help-button" aria-label="使用说明">?</button></div><span class="footer-signature">LESS TABS. MORE UNIVERSE.</span></footer>
+
+    <section class="settings-panel glass-panel" id="settings-panel" aria-label="轨道设置" hidden>
+      <div class="panel-heading"><span>轨道设置</span><span>FLIGHT CONTROL</span></div>
+      <label class="setting-row"><span><strong>自动公转</strong><small>让世界缓缓流动</small></span><input id="auto-orbit" type="checkbox" checked><span class="switch"></span></label>
+      <label class="setting-row"><span><strong>减少动态效果</strong><small>缩短飞行，保留交互</small></span><input id="reduce-motion" type="checkbox"><span class="switch"></span></label>
+      <button id="reset-button" class="reset-button">恢复全部示例标签页 <span>↺</span></button>
+    </section>
+
+    <dialog id="help-dialog" class="glass-panel">
+      <button class="dialog-close icon-button" aria-label="关闭使用说明">×</button><div class="eyebrow">WELCOME TO YOUR ORBIT</div><h2>把世界，握在手心。</h2>
+      <p>拖动地球周围的空白区域，探索不同方向的标签页。</p><div class="help-grid"><div><b>01 / 聚焦</b><p>悬停一张卡片，其他世界会放慢、暗下来。</p></div><div><b>02 / 进入</b><p>点击卡片，穿过微光进入示例页面。</p></div><div><b>03 / 告别</b><p>右键卡片，或点击 ×，让它化作星云。可以撤销。</p></div><div><b>04 / 探索</b><p>输入搜索词或网址，看新的世界从搜索框中诞生。</p></div></div><p class="help-note">这是网页原型，使用示例卡片。进入后可点击“打开真实网页”；真实浏览器标签页管理将在扩展版本中接入。</p><button class="primary-button" id="start-exploring">开始探索 <span>↗</span></button>
+    </dialog>
+    <section id="destination" aria-label="已进入的标签页" hidden></section>
+    <div id="flight-layer" aria-hidden="true"></div>
+    <div id="toast" role="status" aria-live="polite" hidden><span id="toast-message"></span><button id="toast-undo" hidden>撤销</button></div>
+    <div id="loading" aria-live="polite"><span class="orbit-mark"></span><span>正在唤醒你的宇宙…</span></div>
+  </div>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

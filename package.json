@@ -1,0 +1,8 @@
+{
+  "name": "orbit-earth-prototype",
+  "version": "1.0.0",
+  "private": true,
+  "description": "An interactive spatial new-tab prototype with an orbiting Earth.",
+  "type": "module",
+  "scripts": {"dev": "node server.mjs", "check": "node --check dist/app.js"}
+}
