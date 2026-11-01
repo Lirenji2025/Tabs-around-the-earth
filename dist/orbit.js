@@ -3,6 +3,8 @@ import {defaults,previewHTML,escapeHTML as esc} from './previews.js';
 import {normalizeState,entities,members,groupTogether,dissolveGroup,detachCard,removeEntity,togglePin,toggleFavorite,spawnFavorite,searchTarget,rowPositions,uid,reconcile} from './model.js';
 import {OrbitAudio} from './audio.js';
 import {createGlobe} from './globe.js';
+import {planets} from './planets.js';
+import {ConstellationTrail} from './trail.js';
 
 const $=s=>document.querySelector(s),clamp=(n,a,b)=>Math.max(a,Math.min(b,n)),mix=(a,b,t)=>a+(b-a)*t;
 const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
@@ -13,10 +15,12 @@ state.cards.forEach(c=>{if(!c.kind&&defaults.some(d=>d.id===c.id))c.kind=c.id;})
 let reduced=state.preferences.reducedMotion??matchMedia('(prefers-reduced-motion: reduce)').matches;
 const audio=new OrbitAudio(state.preferences.sound),globe=createGlobe(message=>toast(message));
 const views=new Map(),layer=$('#card-layer');
+const trail=new ConstellationTrail($('#constellation-trail'));
 let hovered=null,focused=null,contextId=null,openGroup=null,groupSource=null;
 let rowTarget=false,rowBlend=0,yaw=.36,targetYaw=.36,pitch=-.04,targetPitch=-.04,speed=.035;
 let busy=false,flight=null,birth=null,closing=null,activeDestination=null,entering=null,lastClosed=null;
 let pulse=null,elapsed=0,lastFrame=performance.now(),toastTimer,favoriteTimer,suppressClickUntil=0;
+let dwellTimer;
 let settingsTab='preferences',menuStage='main',width=innerWidth,height=innerHeight;
 const drag={pending:false,active:false,settling:false,id:null,x:0,y:0,startX:0,startY:0,target:null,since:0,pointerId:null};
 const worldDrag={active:false,moved:false,x:0,y:0};
@@ -35,7 +39,7 @@ function syncViews(){
   for(const [id,view] of views)if(!ids.has(id)){view.node.remove();views.delete(id);}
   for(const e of desired){
     let view=views.get(e.id);
-    if(!view){const node=document.createElement('article');node.dataset.id=e.id;node.tabIndex=0;node.setAttribute('role','button');layer.append(node);view={node,x:width/2,y:height*.46,scale:.55,alpha:0,entity:e,manualZoom:1};views.set(e.id,view);attachEntityEvents(node,e.id);}
+    if(!view){const node=document.createElement('article');node.dataset.id=e.id;node.tabIndex=0;node.setAttribute('role','button');layer.append(node);view={node,x:width/2,y:height*.46,scale:.55,alpha:0,entity:e,manualZoom:1,bounce:0,bounceVelocity:0};views.set(e.id,view);attachEntityEvents(node,e.id);}
     view.entity=e;
     const n=view.node;n.className=`entity ${e.type==='group'?'orbit-group':'tab-card'}${e.pinned?' is-pinned':''}`;
     n.setAttribute('aria-label',e.type==='group'?`展开星群 ${e.name}，${e.members.length} 个网页`:`进入 ${e.title}，右键管理`);
@@ -69,21 +73,33 @@ function attachEntityEvents(node,id){
   });
 }
 function cancelDrag(){
+  clearTimeout(dwellTimer);
+  $('#favorites-button').classList.remove('favorite-drop-target');
   for(const v of views.values()){v.node.classList.remove('is-dragging','drop-target');v.node.style.removeProperty('--dwell');}
   Object.assign(drag,{pending:false,active:false,settling:false,id:null,target:null,since:0});
 }
 document.addEventListener('pointermove',ev=>{
   if(!drag.pending)return;
-  if(drag.settling){const stillOver=document.elementsFromPoint(ev.clientX,ev.clientY).some(n=>n.closest?.('.entity')?.dataset.id===drag.target);if(!stillOver){cancelDrag();hovered=null;setStatus();}return;}
+  if(drag.settling){const stillOver=drag.target==='@favorites'?overFavorites(ev.clientX,ev.clientY):document.elementsFromPoint(ev.clientX,ev.clientY).some(n=>n.closest?.('.entity')?.dataset.id===drag.target);if(!stillOver){cancelDrag();hovered=null;setStatus();}return;}
   drag.x=ev.clientX;drag.y=ev.clientY;
   if(!drag.active&&Math.hypot(drag.x-drag.startX,drag.y-drag.startY)>6){drag.active=true;hovered=drag.id;focused=null;views.get(drag.id)?.node.classList.add('is-dragging');setStatus('HOLD TO CONNECT · 0.5 SECONDS');}
   if(!drag.active)return;
-  const target=document.elementsFromPoint(ev.clientX,ev.clientY).map(n=>n.closest?.('.entity')).find(n=>n&&n.dataset.id!==drag.id&&Number(n.style.opacity)>.15)?.dataset.id||null;
-  if(target!==drag.target){if(drag.target)views.get(drag.target)?.node.classList.remove('drop-target');drag.target=target;drag.since=performance.now();}
+  const target=overFavorites(ev.clientX,ev.clientY)?'@favorites':document.elementsFromPoint(ev.clientX,ev.clientY).map(n=>n.closest?.('.entity')).find(n=>n&&n.dataset.id!==drag.id&&Number(n.style.opacity)>.15)?.dataset.id||null;
+  if(target!==drag.target){$('#favorites-button').classList.remove('favorite-drop-target');if(drag.target)views.get(drag.target)?.node.classList.remove('drop-target');drag.target=target;drag.since=performance.now();clearTimeout(dwellTimer);if(target)dwellTimer=setTimeout(()=>{if(drag.active&&drag.target===target){if(target==='@favorites')collectDragged();else merge(drag.id,target);}},500);}
 });
 document.addEventListener('pointerup',()=>{if(!drag.pending)return;const moved=drag.active;if(moved&&drag.target){drag.settling=true;suppressClickUntil=performance.now()+850;return;}cancelDrag();if(moved){suppressClickUntil=performance.now()+350;hovered=null;setStatus();}});
 document.addEventListener('pointercancel',()=>{cancelDrag();setStatus();});
 
+function overFavorites(x,y){
+  const r=$('#favorites-button').getBoundingClientRect();return x>=r.left-12&&x<=r.right+12&&y>=r.top-12&&y<=r.bottom+12;
+}
+function collectDragged(){
+  const list=members(state,drag.id);let added=0;
+  for(const c of list)if(!favorite(c)){toggleFavorite(state,c.id);added++;}
+  cancelDrag();hovered=focused=null;suppressClickUntil=performance.now()+700;metadataChanged();audio.play('magnet');
+  $('#favorites-button').animate([{filter:'brightness(1)',transform:'scale(1)'},{filter:'brightness(3)',transform:'scale(1.3)'},{filter:'brightness(1)',transform:'scale(1)'}],{duration:500});
+  toast(added?`已收藏 ${added} 个网页`:'已在收藏夹中');setStatus();
+}
 function merge(source,target){
   if(busy||source===target)return;
   const a=views.get(source),b=views.get(target);const point=b?{x:b.x,y:b.y}:{x:width/2,y:height*.45};
@@ -154,8 +170,10 @@ universe.addEventListener('wheel',ev=>{
   const id=ev.target.closest('.entity')?.dataset.id||hovered||focused;
   const view=views.get(id);
   if(view&&view.alpha>.15){
-    const amount=ev.deltaY<0?.035:-.035;const card=state.cards.find(c=>c.id===id);
-    if(card){card.zoom=clamp(card.zoom+amount,.78,1.35);view.entity.zoom=card.zoom;}else view.manualZoom=clamp(view.manualZoom+amount,.78,1.35);
+    const amount=ev.deltaY<0?.10:-.10;const card=state.cards.find(c=>c.id===id);
+    const current=card?card.zoom:view.manualZoom,next=clamp(current+amount,.25,1.8);
+    if(next===current&&!reduced)view.bounceVelocity=amount>0?1.9:-1.9;
+    if(card){card.zoom=next;view.entity.zoom=next;}else view.manualZoom=next;
     hovered=id;persist();return;
   }
   if(openGroup)return;
@@ -172,16 +190,25 @@ function orbitPosition(index,total){
   const sy=1-2*(index+.5)/Math.max(total,1),r=Math.sqrt(1-sy*sy),theta=index*Math.PI*(3-Math.sqrt(5));
   const v=new THREE.Vector3(Math.cos(theta)*r*4.05,sy*2.85,Math.sin(theta)*r*4.05);v.applyEuler(new THREE.Euler(pitch,yaw,.04));v.y+=.2;return v;
 }
-function flightPosition(target,index,total,now){
-  const t=(now-flight.start)/1000,offset=(index-(total-1)/2)*.39;
-  const row=new THREE.Vector3(offset,.2,3.65);
-  if(t<.7)return target.clone().lerp(row,ease(clamp(t/.7,0,1)));
-  if(t<5.4){const q=clamp((t-.7)/4.7,0,1),angle=Math.PI*2*(1-Math.pow(1-q,3));return new THREE.Vector3(Math.sin(angle)*3.65+offset*Math.cos(angle),.2+Math.sin(angle)*.45,Math.cos(angle)*3.65-offset*Math.sin(angle));}
-  return row.lerp(target,ease(clamp((t-5.4)/1.1,0,1)));
+function assemblyPosition(v,index,now){
+  if(!flight)return {v,opacity:1,tilt:0};
+  if(reduced)return {v,opacity:1,tilt:0};
+  const seconds=(now-flight.start)/1000;
+  if(seconds<.74){
+    const t=ease(clamp(seconds/.74,0,1));const out=v.clone().multiplyScalar(1+t*2.1);out.y-=t*t*9;out.z-=t*9;
+    return{v:out,opacity:1-t*.9,tilt:t*60*(index%2?1:-1)};
+  }
+  const t=ease(clamp((seconds-.92-index*.035)/1.65,0,1));
+  const from=new THREE.Vector3(-12-index*.2,7+Math.sin(index)*.5,-20-index*.4);
+  const control=new THREE.Vector3(-5+index*.16,5.3,2.5);
+  const result=from.clone().multiplyScalar((1-t)**2).add(control.multiplyScalar(2*(1-t)*t)).add(v.clone().multiplyScalar(t*t));
+  return {v:result,opacity:clamp(t*3,0,1),tilt:(1-t)*(-25-index*3)};
 }
+
+function flightPosition(target,index,total,now){return assemblyPosition(target,index,now).v;}
 function replay(){
   if(busy)return;if(!state.cards.length){toast('轨道暂时为空。搜索一个世界，或在设置中恢复示例。');return;}collapseGroup();closeMenu();cancelGrouping();hovered=focused=null;setRow(false);audio.unlock();
-  busy=true;flight={start:performance.now(),previous:null};$('#replay-button').disabled=true;$('#skip-flight').hidden=false;setStatus('ONE REVOLUTION · RETURNING HOME');
+  busy=true;flight={start:performance.now(),previous:null};$('#replay-button').disabled=true;$('#skip-flight').hidden=false;setStatus('REASSEMBLING YOUR UNIVERSE');
   if(reduced)finishFlight();
 }
 function finishFlight(){flight=null;busy=false;audio.stopFlight();$('#replay-button').disabled=false;$('#skip-flight').hidden=true;setStatus();}
@@ -248,7 +275,7 @@ function renderFavorites(){
   const list=$('#favorites-list');list.innerHTML=state.favorites.length?state.favorites.map(c=>`<button type="button" class="favorite-entry" data-favorite="${c.id}">${chip(c)}<span><b>${esc(c.title)}</b><small>${esc(c.domain)}</small></span><i>↗</i></button>`).join(''):'<div class="empty-state"><b>留住值得回来的世界</b>右键任意卡片 → 加入收藏夹</div>';
   $('#favorites-count').textContent=state.favorites.length;$('#favorites-count').hidden=!state.favorites.length;
 }
-function showFavorites(){clearTimeout(favoriteTimer);if(busy)return;$('#favorites-popover').hidden=false;$('#favorites-button').setAttribute('aria-expanded','true');renderFavorites();}
+function showFavorites(){clearTimeout(favoriteTimer);if(busy||drag.active)return;$('#favorites-popover').hidden=false;$('#favorites-button').setAttribute('aria-expanded','true');renderFavorites();}
 function hideFavorites(){clearTimeout(favoriteTimer);$('#favorites-popover').hidden=true;$('#favorites-button').setAttribute('aria-expanded','false');}
 $('#favorite-anchor').addEventListener('pointerenter',showFavorites);$('#favorite-anchor').addEventListener('pointerleave',()=>favoriteTimer=setTimeout(hideFavorites,180));
 $('#favorites-button').addEventListener('focus',showFavorites);$('#favorites-button').addEventListener('click',()=>{$('#favorites-popover').hidden?showFavorites():hideFavorites();});
@@ -265,6 +292,7 @@ function hideSettings(){$('#settings-panel').hidden=true;$('#settings-button').s
 $('#settings-button').addEventListener('click',()=>$('#settings-panel').hidden?showSettings():hideSettings());$('#close-settings').addEventListener('click',hideSettings);
 document.querySelector('.settings-tabs').addEventListener('click',ev=>{const tab=ev.target.closest('[data-settings-tab]')?.dataset.settingsTab;if(tab)showSettings(tab);});
 function renderManagement(){
+  $('#planet-select').value=state.preferences.planet;
   $('#sound-toggle').checked=state.preferences.sound;$('#auto-orbit').checked=state.preferences.autoOrbit;$('#reduce-motion').checked=reduced;
   $('#groups-panel').innerHTML=`<p class="manage-help">拖动卡片并停留半秒，或使用右键菜单建组。可重命名、展开或解散星群。</p>${state.groups.length?state.groups.map(g=>`<div class="manage-row"><span class="manage-symbol">◉</span><div class="manage-main"><input aria-label="重命名 ${esc(g.name)}" data-rename-group="${g.id}" value="${esc(g.name)}" maxlength="40"><small>${members(state,g.id).length} 个网页</small></div><button data-manage="expand" data-id="${g.id}">展开</button><button data-manage="dissolve" data-id="${g.id}">解散</button></div>`).join(''):'<div class="empty-state"><b>尚无星群</b>把两个世界吸附到一起，开始整理。</div>'}`;
   $('#favorites-panel').innerHTML=`<p class="manage-help">右键网页可加入收藏夹。移除收藏不会关闭已打开的网页。</p>${state.favorites.length?state.favorites.map(c=>`<div class="manage-row">${chip(c)}<div class="manage-main"><b>${esc(c.title)}</b><small>${esc(c.domain)}</small></div><button data-manage="launch-favorite" data-id="${c.id}">打开</button><button data-manage="remove-favorite" data-id="${c.id}">移除</button></div>`).join(''):'<div class="empty-state"><b>收藏夹还是空的</b>右键卡片 → 加入收藏夹。</div>'}`;
@@ -299,6 +327,14 @@ const help=$('#help-dialog');$('#help-button').addEventListener('click',()=>{hid
 $('#engine-button').addEventListener('click',()=>{const m=$('#engine-menu');m.hidden=!m.hidden;$('#engine-button').setAttribute('aria-expanded',String(!m.hidden));});
 $('#engine-menu').addEventListener('click',ev=>{const e=ev.target.closest('[data-engine]')?.dataset.engine;if(e){state.preferences.engine=e;syncEngine();persist();$('#engine-menu').hidden=true;$('#engine-button').setAttribute('aria-expanded','false');$('#search-input').focus();}});
 function syncEngine(){$('#engine-button').innerHTML=`${state.preferences.engine} <span>⌄</span>`;}
+function syncPlanet(){
+  const p=planets.find(p=>p.id===state.preferences.planet)||planets[2];
+  globe.setPlanet(p.id);$('.planet-caption strong').textContent=p.label;
+  $('.planet-caption div>span').textContent=p.description;
+  $('.planet-caption .coordinate').textContent=`SOLAR SYSTEM / ${String(planets.indexOf(p)+1).padStart(2,'0')}`;
+  $('#planet-select').value=p.id;
+}
+$('#planet-select').addEventListener('change',ev=>{state.preferences.planet=ev.target.value;syncPlanet();persist();audio.play('toggle');});
 document.addEventListener('pointerdown',ev=>{
   if(state.preferences.sound)audio.unlock();
   if(!ev.target.closest('#context-menu,.entity'))closeMenu();
@@ -325,9 +361,10 @@ function frame(now){
   const targetSpeed=state.preferences.autoOrbit&&!reduced&&!stopped?(focus?.002:.035):0;
   speed=mix(speed,targetSpeed,1-Math.exp(-dt*5));targetYaw+=speed*dt;yaw=mix(yaw,targetYaw,1-Math.exp(-dt*8));pitch=mix(pitch,targetPitch,1-Math.exp(-dt*8));
   globe.render(dt,{yaw,pitch,time:elapsed,reduced,row:rowBlend});
-  const list=entities(state),row=rowPositions(list,width,height),center={x:width/2,y:height*.45};
+  trail.render(now,width,height,reduced);
+  const list=entities(state),row=rowPositions(list.map(e=>({...e,zoom:e.type==='group'?views.get(e.id)?.manualZoom||1:e.zoom})),width,height,focus),center={x:width/2,y:height*.45};
   if(flight){
-    if(now-flight.start>(reduced?100:6500))finishFlight();
+    if(now-flight.start>(reduced?100:3350+list.length*35))finishFlight();
     else{
       const mid=Math.floor(list.length/2),point=flightPosition(orbitPosition(mid,list.length),mid,list.length,now);
       if(flight.previous){const velocity=point.clone().sub(flight.previous).divideScalar(dt),relative=point.clone().sub(globe.camera.position),distance=relative.length();audio.updateFlight({speed:velocity.length(),radial:velocity.dot(relative.normalize()),pan:point.x/4.5,proximity:clamp(1-distance/23,.1,1)});}
@@ -344,9 +381,8 @@ function frame(now){
     const depth=clamp(globe.camera.position.z/(globe.camera.position.z-world.z),.65,1.55);
     let scale=depth*(width<480?.54:width<700?.66:.78)*(e.type==='group'?1.12:1);
     p.y=height*.45+(p.y-height*.5)*.68;
-    if(!behind){const dx=p.x-center.x,dy=p.y-center.y,d=Math.hypot(dx,dy);if(d<globe.radius*.88&&d>1){const factor=globe.radius*.88/d;p.x=center.x+dx*factor;p.y=center.y+dy*factor;}}
     let alpha=behind?0:world.z<-1?.48:.95;
-    if(flight){world=flightPosition(world,index,list.length,now);p=globe.project(world);p.y=height*.45+(p.y-height*.5)*.7;scale=clamp(globe.camera.position.z/(globe.camera.position.z-world.z),.65,1.55)*(width<600?.6:.78);alpha=world.z<-.5&&Math.hypot(p.x-width/2,p.y-height*.48)<globe.radius*.95?.02:1;behind=alpha<.05;}
+    if(flight){const assembly=assemblyPosition(world,index,now);world=assembly.v;angle=assembly.tilt;p=globe.project(world);p.y=height*.45+(p.y-height*.5)*.7;scale=clamp(globe.camera.position.z/(globe.camera.position.z-world.z),.65,1.55)*(width<600?.6:.78);alpha=assembly.opacity*(world.z<-.5&&Math.hypot(p.x-width/2,p.y-height*.48)<globe.radius*.95?.02:1);behind=alpha<.05;}
     else if(openGroup){
       if(expandedIds.has(e.id)){
         const i=expanded.findIndex(c=>c.id===e.id),n=expanded.length;
@@ -367,21 +403,27 @@ function frame(now){
     if(isFocus){scale*=1.18;alpha=1;behind=false;}
     else if(focus&&!openGroup&&!drag.active)alpha*=.28;
     scale*=e.type==='group'?view.manualZoom:(e.zoom||1);
-    if(rowBlend>.85&&!flight){const half=(e.type==='group'?72:96)*scale;p.x=clamp(p.x,half+16,width-half-16);}
+    if(rowBlend>.85&&!flight&&!openGroup){const half=(e.type==='group'?72:96)*scale;p.x=clamp(p.x,half+16,width-half-16);}
+    view.bounceVelocity+=(-90*view.bounce-13*view.bounceVelocity)*dt;view.bounce+=view.bounceVelocity*dt;scale*=1+view.bounce;
     if(drag.active&&drag.id===e.id){p.x=drag.x;p.y=drag.y;scale=Math.max(scale,width<600?.8:1.05);alpha=1;behind=false;angle=0;}
     const response=1-Math.exp(-dt*(drag.active&&drag.id===e.id?28:9));
     view.x=mix(view.x,p.x,response);view.y=mix(view.y,p.y,response);view.scale=mix(view.scale,scale,response);view.alpha=mix(view.alpha,entering===e.id?0:alpha,response);
     const rotateY=(openGroup||rowBlend>.9||flight)?0:clamp(world.x*-3,-13,13)*(1-rowBlend),rotateX=0;
     view.node.style.transform=`translate3d(${view.x}px,${view.y}px,0) translate(-50%,-50%) scale(${view.scale}) perspective(1000px) rotateY(${rotateY}deg) rotateX(${rotateX}deg) rotate(${angle}deg)`;
-    view.node.style.opacity=view.alpha.toFixed(3);view.node.style.zIndex=drag.id===e.id&&drag.active?'1100':e.pinned&&rowBlend>.85?String((isFocus?1050:900)+index):isFocus?'700':rowBlend>.85?String(100+index*2):String(Math.round(100+world.z*8+index));
+    view.node.style.opacity=view.alpha.toFixed(3);view.node.style.zIndex=drag.id===e.id&&drag.active?'1100':isFocus?'700':rowBlend>.85?String(600-index*2):String(Math.round(100+world.z*8+index));
     const disabled=busy||behind||openGroup&&!expandedIds.has(e.id)||view.alpha<.08;
     view.node.style.pointerEvents=disabled||drag.id===e.id&&drag.active?'none':'auto';view.node.classList.toggle('is-hovered',isFocus);view.node.tabIndex=disabled?-1:0;view.node.setAttribute('aria-hidden',disabled?'true':'false');
     const close=view.node.querySelector('.card-close');if(close)close.tabIndex=disabled?-1:0;
   });
-  if(drag.active&&drag.target){const target=views.get(drag.target),progress=clamp((now-drag.since)/500,0,1);if(target){target.node.classList.add('drop-target');target.node.style.setProperty('--dwell',progress.toFixed(3));if(progress>=1)merge(drag.id,drag.target);}}
+  if(drag.active&&drag.target){const target=views.get(drag.target),progress=clamp((now-drag.since)/500,0,1);if(drag.target==='@favorites'){$('#favorites-button').classList.add('favorite-drop-target');$('#favorites-button').style.setProperty('--dwell',progress);if(progress>=1)collectDragged();}else if(target){target.node.classList.add('drop-target');target.node.style.setProperty('--dwell',progress.toFixed(3));if(progress>=1)merge(drag.id,drag.target);}}
 }
 document.addEventListener('visibilitychange',()=>{audio.stopFlight();lastFrame=performance.now();if(flight)flight.previous=null;});
 function updateClock(){const date=new Date();$('#clock').textContent=date.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});$('#date').textContent=date.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'2-digit'}).toUpperCase();}
-updateClock();setInterval(updateClock,15000);syncViews();renderFavorites();renderManagement();syncEngine();persist();requestAnimationFrame(frame);
+updateClock();setInterval(updateClock,15000);syncViews();renderFavorites();renderManagement();syncEngine();syncPlanet();persist();requestAnimationFrame(frame);
+$('#search-form').addEventListener('pointerdown',ev=>{
+  if(ev.target.closest('#favorites-popover'))return;
+  $('#search-form').animate([{borderColor:'#b9cfdf55',boxShadow:'0 0 0px #bde8ff00'},{borderColor:'#e8f6ffcc',boxShadow:'0 0 32px #bde8ff38',offset:.25},{borderColor:'#bbdcf078',boxShadow:'0 0 12px #bde8ff0a'}],{duration:reduced?100:430,easing:'ease-out'});
+});
+document.addEventListener('pointermove',ev=>{if(!activeDestination&&!reduced&&ev.pointerType!=='touch')trail.add(ev.clientX,ev.clientY,performance.now());});
 function start(){const loading=$('#loading');if(!loading)return;loading.style.opacity='0';setTimeout(()=>loading.remove(),500);replay();}
 if(document.readyState==='complete')start();else window.addEventListener('load',start,{once:true});

@@ -15,3 +15,9 @@
 ## Original work
 
 Layout, 3D scene composition, card mock previews, procedural audio, transition design and icon SVGs were created for this prototype with Codex assistance. Named services are visual references only and do not sponsor or endorse this project. No source from NebulaDashboard, Tab Sphere, Orbit Station or TabFlow was copied into this prototype.
+
+## Planet customization
+
+The seven non-Earth maps in `dist/planets.js` are original procedural Canvas illustrations. Saturn rings are generated geometry. They are not external photographs or scientific maps; sizes are normalized for the interface. The short constellation trail is generated locally.
+
+The standalone root `index.html` embeds the same library and assets. The Three.js copyright header is retained; the full MIT license is in `dist/assets/THREE-LICENSE.txt`.

@@ -1,51 +1,89 @@
-# ORBIT — 你的世界，正在轨道上
+# ORBIT · Tabs around the Earth
 
-A browser-based interactive prototype for a spatial Edge new-tab experience. Website cards orbit a draggable Earth. Hover to focus; use the wheel to arrange or resize; magnetically connect cards into circular constellations; manage favorites and pinned pages from a right-click menu.
+**Assignment 3 — an interactive spatial new-tab prototype.**
 
-![ORBIT prototype](screenshot.png)
+把未完成的网页变成围绕星球运行的小世界。通过悬停、滚轮、拖拽和点击，整理标签页并进入它们。
 
-## Run
+![ORBIT：土星与环绕的网页](screenshot.png)
 
-Requires Node.js 18 or later. There are no dependencies to install; Three.js and visual assets are bundled locally.
+## 直接使用
 
-```powershell
-cd C:\Users\17893\Desktop\programming\assignment3\orbit-earth
+**无需安装：** 下载本仓库（Code → Download ZIP），解压后用 Edge 或 Chrome 打开根目录的 **index.html**。这是约 3.43 MB 的完整单文件网页，包含脚本、样式、Three.js、地球纹理和海岸线；运行原型不需要联网或安装依赖。打开真实网站、使用真实搜索结果时需要网络。
+
+- [GitHub 仓库](https://github.com/Lirenji2025/Tabs-around-the-earth)
+- [Sites 原型](https://orbital-earth-tabs.tealglass1.chatgpt.site/)：保留原有访问权限；评阅者可下载单文件使用。
+- 源代码入口为 `dist/orbit.js`；根目录 `index.html` 是从源码生成的可分发版本。
+
+## 先试三个动作
+
+1. 悬停一张卡片，点击进入；点击 **返回轨道** 或按 **Esc** 返回。
+2. 在星球附近空白处向上滚动，将卡片排成静止横列；向下滚动恢复轨道。
+3. 把一张卡片拖到另一张上停留 **0.5 秒**，组成圆形星群；点击星群展开，点击空白收起。
+
+## 操作说明
+
+| 输入 | 响应与反馈 |
+| --- | --- |
+| 拖动星球附近空白处 | 旋转星球及标签轨道 |
+| 悬停卡片 | 放大高亮，其他卡片变暗、减速，播放轻微铜管音 |
+| 高亮时滚动 | 缩放至 25%–180%；在边界继续滚动会回弹 |
+| 点击卡片 | 镜头进入本地示例页面；可通过明确链接打开真实网站 |
+| 拖到其他卡片/星群，停留半秒 | 进度环 → 电磁吸附声 → 圆形星群 |
+| 拖到搜索框旁收藏夹，停留半秒 | 收藏夹闪动、进度环及成功提示；原卡片保留 |
+| 右键 | 分组、收藏、置顶、移出组或明确关闭；不会立即删除 |
+| 置顶 | 淡金色描边；横列右端预留完整位置，多张置顶不重叠 |
+| 悬停收藏夹、点击收藏 | 展开列表；生成独立新卡片并进入 |
+| 搜索关键词或 HTTP(S) 网址 | 卡片从搜索框分裂，汇入轨道并进入示例结果页 |
+| 关闭 / 撤销 / Ctrl或Cmd+Z | 云雾消散；可恢复最近关闭的卡片或星群 |
+| 移动鼠标 | 星座连线：最多 8 节点、约 230px 总路径、850ms 生命周期 |
+| 设置 → 选择你的星球 | 水星、金星、地球、火星、木星、土星、天王星、海王星；选择自动保存 |
+| 设置 | 声效、公转、减少动态效果、帮助、星群/收藏/置顶管理 |
+
+入场恢复第一版的 **散落远离 → 从远处沿弧线飞回轨道** 动画，可跳过或重播。普通轨道没有中心推力；搜索创建/关闭仍保留短暂排斥反馈。
+
+## 本地开发与检查
+
+只需 Node.js 18+，没有需要安装的 npm 依赖。
+
+```sh
+git clone https://github.com/Lirenji2025/Tabs-around-the-earth.git
+cd Tabs-around-the-earth
 node server.mjs
 ```
 
-Open http://127.0.0.1:4173 in Edge or another modern desktop browser. The page uses modules and asset loading, so serve it over HTTP rather than opening index.html directly. `npm run dev` is equivalent.
+打开 `http://127.0.0.1:4173` 查看模块化源码版本；`/standalone.html` 预览生成的单文件版本。
 
-## Try it
+```sh
+node --test tests/model.test.mjs
+node --check dist/orbit.js
+node scripts/build-standalone.mjs
+```
 
-- Drag the empty space near Earth to rotate the planet and the cards.
-- Scroll up over the globe or nearby empty space: the cards collect into a stationary horizontal row. Scroll down to restore orbit. Pinned entities occupy complete slots at the right end.
-- Hover a card: it grows and glows; other cards dim and slow down. Wheel up/down over the highlighted card makes a small size adjustment instead of changing the whole layout.
-- Drag one card onto another card or a circular constellation. Stay over the target for half a second to magnetically group them. Releasing over a target can complete the remaining dwell while the pointer stays there; moving away cancels it.
-- Click a circular constellation to split it into its member cards. Click empty space, use the collapse button, or press Escape to return.
-- Click or focus a card and press Enter: a zoom animation opens its local demo page. Use **打开真实网页** to open the website, or **返回轨道** / Escape to come back.
-- Right-click opens a management menu; it never immediately deletes a card. The menu supports grouping, favorites, pinning, detaching from a group, and explicit close. × and Delete are alternate close actions. Use Undo or Ctrl/Cmd+Z to restore the most recently closed card or group.
-- Hover or focus the folder next to the search icon to see favorites. Opening a favorite births an independent new card; closing the original never deletes the favorite.
-- Enter a search term or an HTTP(S) website address. A new card splits away from the search bar, enters orbit, and opens its demo page. The demo provides links to real search results.
-- Entry collects the cards into a line, carries the line once around Earth with a fast-to-slow revolution, then releases the cards into orbit. A skip button is available during entry.
-- The single gear opens sound / motion settings, instructions, group management (rename / expand / dissolve), favorite management, and pin management. Restoring the 12 sample pages preserves favorites.
-- Audio is synthesized locally: velocity-dependent low-frequency flight noise with radial Doppler pitch and stereo motion, a deeper entrance, a receding return, electromagnetic attraction, a quiet open-fifth brass hover pad, and an airy sound-toggle cue. No game soundtrack or sampled sound effects are included.
+修改 `dist/` 后运行最后一条命令，重新生成根目录 `index.html`。打包器只支持本项目使用的静态命名导入/导出，遇到不支持的语法会报错；不是通用 JavaScript 打包器。
 
-## Scope and limitations
+## 文件结构
 
-This is a **web prototype**, not a browser extension. The cards are handmade illustrative previews of sample sites; they are not screenshots of the user's tabs. The page cannot enumerate, focus, or close real browser tabs. Those operations require a future extension using the browser Tabs API. Local previews keep repeated exploration possible without leaving the prototype; external links open real websites when explicitly chosen.
+| 文件 | 用途 |
+| --- | --- |
+| `index.html` | 可直接打开、可独立分发的完整网页 |
+| `dist/index.html`, `style.css`, `v2.css` | 模块化页面和视觉样式 |
+| `dist/orbit.js` | 输入、投影、动画、面板与状态协调 |
+| `dist/model.js` | 分组、收藏、置顶、布局及状态迁移 |
+| `dist/globe.js`, `planets.js` | WebGL 星球与原创行星示意纹理 |
+| `dist/audio.js`, `trail.js` | 程序合成声效与短星座尾迹 |
+| `dist/assets/` | Three.js、许可证、地球纹理和地图数据 |
+| `scripts/build-standalone.mjs` | 无第三方依赖的单文件生成器 |
+| `tests/model.test.mjs` | 十项状态与布局测试 |
+| `PROCESS.md`, `CREDITS.md` | 过程、真实反馈、AI 使用和素材来源 |
 
-Cards, groups, favorites, pins and preferences are stored in this browser's localStorage. Previous prototype data migrates automatically. All visual rendering and synthesized audio run locally. Browser autoplay restrictions can keep initial entry silent until a click or key press. On devices without WebGL a static Earth fallback keeps the card interactions usable. Reduced motion follows the OS preference by default and can be changed in settings. The current prototype limits the orbit to 36 cards.
+## 范围与限制
 
-## Verification
+- 这是网页交互原型，不是 Edge 扩展。卡片是原创示意预览，不能读取、切换或关闭真实浏览器标签页，也没有实际标签栏位置数据。
+- 卡片、星群、收藏、置顶、星球选择和偏好存于当前浏览器 localStorage。文件模式持久化规则依浏览器而异；不能保存时仍可使用当前会话。轨道上限 36 张。
+- 声效完全本地合成。首次交互前可能被自动播放策略静音。支持减少动态效果、键盘操作、错误提示和关闭撤销。
+- 非地球行星是原创程序绘制的视觉示意，大小统一处理，不是科学比例或真实地表影像。土星带三维星环。
+- 无 WebGL 时使用静态星球并保留卡片操作。单文件 HTTP 预览已验证；测试工具禁止加载 file: 地址，因此未把双击文件测试写成已完成。
 
-`npm test` runs the state-model checks for grouping / merging, singleton cleanup, favorite independence, pin placement, state migration and safe search URLs. `npm run check` validates the main module's syntax. Browser verification is documented in `PROCESS.md`.
+## 作业过程与来源
 
-## Credits
-
-- Three.js 0.160.1 — MIT, https://github.com/mrdoob/three.js. The bundled license is in `dist/assets/THREE-LICENSE.txt`.
-- Earth texture from the Three.js r160 example assets (`examples/textures/planets/earth_atmos_2048.jpg`); visual source associated with the Three.js Earth example / NASA Earth imagery. See `CREDITS.md`.
-- Coastlines: Natural Earth, public domain, https://www.naturalearthdata.com/.
-- Sample website names and visual references belong to their respective owners. All miniature layouts are original illustrative representations; no website screenshots were captured.
-- Audio: procedurally generated filtered noise and stereo panning; no external recordings.
-
-See `PROCESS.md` for the design and development notes. A user trial still needs to be carried out by a real participant.
+见 [PROCESS.md](PROCESS.md)：概念、迭代、试用者反馈、AI 建议取舍与开发验证。见 [CREDITS.md](CREDITS.md)：第三方库、素材与许可。Git 历史保留真实开发提交，没有人为补造时间线。

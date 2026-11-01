@@ -10,3 +10,20 @@ test('Favorites survive closing the source and spawn an independent ungrouped ca
 test('Migration sanitizes unsafe URLs, animation fields and orphaned group IDs',()=>{const s=normalizeState({cards:[{...fixtures[0],groupId:'missing',alpha:0},{id:'unsafe',title:'unsafe',url:'javascript:alert(1)'}]},fixtures);assert.equal(s.cards.length,1);assert.equal(s.cards[0].groupId,null);assert.equal('alpha' in s.cards[0],false);});
 test('Group pinning includes all members; closing a group removes exactly its members',()=>{const s=fresh();const g=groupTogether(s,'a','b');togglePin(s,g);assert.equal(s.cards.filter(c=>c.pinned).length,2);removeEntity(s,g);assert.deepEqual(s.cards.map(c=>c.id),['c','d']);assert.equal(s.groups.length,0);});
 test('Search rejects unsupported schemes and encodes external search terms',()=>{assert.equal(searchTarget('javascript:alert(1)'),null);assert.equal(searchTarget('  '),null);assert.equal(searchTarget('example.com').url,'https://example.com/');assert.equal(searchTarget('深空 探索','Google').url,'https://www.google.com/search?q=%E6%B7%B1%E7%A9%BA%20%E6%8E%A2%E7%B4%A2');});
+
+test('Dense rows reserve actual zoomed widths, including multiple pins and hover',()=>{
+  for(const width of [390,768,1280])for(const count of [4,12,36]){
+    const list=Array.from({length:count},(_,i)=>({id:String(i),type:i%4===0?'group':'card',pinned:i>=count-3,zoom:i%3===0?1.8:.25}));
+    const focus=list.at(-1).id,points=rowPositions(list,width,800,focus);let last=0;
+    for(const e of list){const p=points.get(e.id),half=(e.type==='group'?72:96)*p.scale*e.zoom*(e.id===focus?1.18:1);assert.ok(p.x-half>=last-.001);assert.ok(p.x+half<=width);last=p.x+half;}
+  }
+});
+test('Wide zoom range survives reload and remains bounded',()=>{
+  const s=normalizeState({cards:[{...fixtures[0],zoom:.25},{...fixtures[1],zoom:1.8},{...fixtures[2],zoom:99}]},fixtures);
+  assert.deepEqual(s.cards.map(c=>c.zoom),[.25,1.8,1.8]);
+});
+
+test('Planet preference persists and unknown planets fall back to Earth',()=>{
+  assert.equal(normalizeState({preferences:{planet:'saturn'}},fixtures).preferences.planet,'saturn');
+  assert.equal(normalizeState({preferences:{planet:'unknown'}},fixtures).preferences.planet,'earth');
+});

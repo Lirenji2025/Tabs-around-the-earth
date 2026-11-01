@@ -7,6 +7,7 @@ const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8'
 const port=Number(process.env.PORT||4173);
 const server=http.createServer(async(req,res)=>{
   try{
+    if(req.url==='/standalone.html'){res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-cache'});res.end(await readFile(path.join(root,'..','index.html')));return;}
     const url=new URL(req.url,'http://localhost');const file=path.resolve(root,'.'+decodeURIComponent(url.pathname==='/'?'/index.html':url.pathname));
     if(file!==root&&!file.startsWith(root+path.sep)){res.writeHead(403);res.end();return;}
     const info=await stat(file);if(!info.isFile())throw Error();const data=await readFile(file);

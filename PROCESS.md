@@ -1,77 +1,103 @@
-# Process
+# PROCESS — Assignment 3
 
-## Starting idea
+## 1. Intent and interaction loop
 
-Create a new-tab experience in which unfinished websites feel like little worlds orbiting Earth. The intended user wants a spatial, playful way to return to open pages. The key loop is **choose a card → enter its world → return to orbit**. A second loop is **close a card → watch it dissolve → undo if needed**.
+ORBIT explores a playful alternative to a crowded browser tab bar. Unfinished websites become small worlds orbiting a planet. The core loop is **point at a card → receive focus feedback → enter its world → return to orbit**. A second loop organizes cards through grouping, favorites and pins.
 
-The requested motion language includes a disassembly and return flight, a rotating globe, pale card edges, hover focus with slower surrounding motion, a zoom-through transition, cloud dissolution, and a search field that births a new orbiting card.
+The intended setting is an Edge startup/new-tab page. This assignment delivers a working webpage with sample cards, testable without extension permissions. It does not claim to manage actual browser tabs.
 
-## Implementation decisions
+## 2. Input → response → feedback
 
-- Build a self-contained webpage prototype before connecting real browser-tab APIs. Use explicit sample-tab labeling and local destination previews to keep the prototype understandable and repeatable.
-- Use WebGL / Three.js for Earth, atmosphere, coastlines, stars and orbit lines; use projected DOM cards for readable text, ordinary buttons, and keyboard interaction.
-- Keep hover emphasis and overall orbital speed separate so a selected card can brighten while the rest of the scene slows smoothly.
-- Retain a visible return path and an optional real-site link after the zoom animation.
-- Add an alternative close button, keyboard close, and one-step Undo. Right-click alone would be difficult to discover and unavailable on many touch devices.
-- Follow reduced-motion preferences, provide a sound switch, and avoid relying on autoplay for initial audio.
-- Handle empty search input, invalid or unsupported URL schemes, a full orbit, unavailable local storage, missing globe assets and WebGL failure.
+| Input | Response | Feedback |
+| --- | --- | --- |
+| Hover | Focus card; slow surrounding motion | White glow, enlargement, dimmed neighbors, synthesized brass |
+| Wheel near planet | Collect into row / restore orbit | Smooth repositioning and layout caption |
+| Wheel on card | Resize within 25%–180% | Smooth scaling and spring rebound at bounds |
+| Drag onto card, dwell 500ms | Form or merge constellation | Progress ring, magnetic sound, circular group |
+| Drag onto favorites, dwell 500ms | Store independent favorite | Flashing folder, progress ring, success message |
+| Click | Enter destination / expand group | Zoom-through transition / group splitting |
+| Search | Create independent card | Cell division and entry transition |
+| Explicit close | Remove card or group | Cloud dissolve and recoverable Undo |
+| Choose planet | Change scene and save preference | New surface, name, caption and Saturn rings |
 
-## AI use
+## 3. Iteration record
 
-Codex was used to implement the webpage, create original miniature website layouts, write the animation logic, synthesize sound, and prepare documentation. The user's detailed concept guided the design.
+### V1 — cinematic spatial browsing
 
-Suggestion retained: combine a rendered globe with accessible HTML cards, preserving crisp text and usable controls.
+Implemented Earth, projected HTML cards, hover focus, globe dragging, zoom-through entry/return, cloud closing, search and local persistence. Entry scattered cards away, then returned them on curved paths. Right-click initially closed cards.
 
-Suggestion changed: navigating away immediately after the zoom would interrupt a prototype review. The implementation instead arrives at a labeled local preview and offers an explicit link to the actual website.
+Developer checks identified narrow-screen crowding, leading to smaller cards and a compressed vertical orbit. Clear return controls and explicit external links kept repeated prototype exploration possible.
 
-## User trial — pending
+### V2 — organization and sound
 
-No independent participant has been observed yet. Browser checks by the developer are not a substitute for the required user trial.
+The author requested non-destructive right-click, a stationary row, circular groups, magnetic dwell, favorites, pins and unified management. These became persistent state relationships. Singleton groups dissolve without losing survivors; closing a page does not remove its independent favorite.
 
-Ask at least one person to try the prototype without explanation. Record what they try, where they pause, whether they discover hover / close / return / search, and one design decision based on the observation. Do not invent participant feedback.
+Entry temporarily changed to a fast-to-slow revolution in a line. Original procedural sound added velocity/radial Doppler motion, deeper entry, receding return, electromagnetic grouping and airy toggles. No game soundtrack was sampled.
 
-## Version 1 development verification
+### V3 — feedback and simplification, 2026-11-01
 
-The developer checked the rendered prototype in the in-app Chromium browser at desktop and narrow layouts. Verified:
+| Feedback received in the development conversation | Resulting change |
+| --- | --- |
+| Ordinary cards appeared repelled from the center | Removed permanent radial exclusion; retained short create/close pulses |
+| Group UI obscured cards | Replaced opaque panel with compact, mostly pointer-transparent top toolbar |
+| Zoom range too small | Added 25%–180% bounds, spring feedback and persistence |
+| Right cards obscured left cards; pins overlapped | Allocate actual zoomed widths, fit complete row, reserve right-end pins; left unfocused cards stack above right ones |
+| Drag floating cards into favorites | Added 500ms collection with flashing and progress; original remains open |
+| Search click needs feedback | Added a brief light/border pulse |
+| Mouse should draw constellations | Added sparsely sampled stars and segments |
+| “星座太长” — constellation too long | Limited to 8 nodes, approximately 230px total path and 850ms lifetime |
+| Restore the first entry animation | Restored V1 scatter-away / curved-return positions, opacity and tilt from its actual commit; the briefly tried rear-to-front line is not final |
+| Directly openable webpage and repository source | Generated standalone root HTML with embedded assets; retained modules, tests, documentation and history |
 
-- The globe renders without WebGL or asset-loading errors in the tested browser.
-- Dragging near the globe changes the orbit's projected card positions.
-- Focusing a card enlarges / highlights it and dims the others.
-- Clicking Figma completes the fly-in transition and shows its local destination; Return restores the orbit.
-- Right-click close decreases the count from 12 to 11; Undo returns it to 12.
-- Empty search and unsupported `javascript:` URLs produce feedback without navigation.
-- Searching for `深空探索` creates card 13 and opens a local results preview with correctly encoded external links.
-- Reload preserves the 13-card state; Restore returns to 12 sample cards.
-- Sound, reduced-motion, automatic-orbit, and help controls respond.
-- At a 390px viewport, the search field stays within the viewport and the document has no horizontal overflow.
-- The checked browser console reported no errors or warnings.
+## 4. Real user feedback and resulting change
 
-Visual QA led to smaller cards on narrow screens, a compressed vertical orbit to reserve the search area, and separate stacking for interface controls. These are developer checks, not an independent user trial. The synthesized sound's subjective quality and behavior across other browsers still need human review.
+**Evidence source:** the author relayed trial-participant feedback in this conversation on 2026-11-01. When asked about the trial, the author replied:
 
-## Version 2: spatial organization and sound
+> “没有卡住，说可以自定义星球”
 
-The user's revision replaces destructive right-click with an explicit menu, introduces a stationary horizontal row via the wheel, and adds groups, favorites and pins. A horizontal line was chosen because the user also specified a fully visible rightmost position for pinned pages.
+The reported result was no blockage, with a suggestion to customize the planet. Settings now offer Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus and Neptune. The choice persists. Original procedural surfaces distinguish the planets; Saturn includes three-dimensional rings.
 
-Groups are persistent relationships between cards; favorites are independent copies of page metadata. Closing a source page therefore does not remove its favorite. Groups with a single remaining card dissolve without losing that card. A pinned member makes its collapsed constellation occupy a pinned slot.
+This is **author-reported feedback**, not a trial directly observed or recorded by Codex. The participant's identity, exact tasks, duration, and whether explanations were withheld until after first use were not supplied. This document therefore does not invent a timed session, task-success rate or proof of the assignment's “try before explanation” condition. The author should confirm that condition before submission if it has not already been satisfied.
 
-The globe is larger. Entry is a coherent line that completes one decelerating revolution before unfolding. Opening and closing cards produces a center-directed transition with an outward repulsion pulse on neighboring cards. The search bar gains a hover glow.
+The author also supplied the concrete usability observations listed in V3. Those informed actual revisions; they are not presented as independent participant data.
 
-All audio is original procedural synthesis: an open-fifth, low-pass brass pad with reverb for hover; a short descending electromagnetic snap for grouping; deep sub-bass / filtered-noise entrance and receding return; and airy paired tones for sound toggling. Flight uses measured source velocity and radial relative velocity for a bounded Doppler ratio, plus distance-dependent gain and stereo panning. Autoplay restrictions remain respected.
+## 5. AI use and design judgment
 
-The pure state model has seven Node tests covering lossless group merges, singleton cleanup, pinned row bounds, independent favorites, migration sanitization, group pin / close, and search URL handling. All seven passed.
+**Tool:** OpenAI Codex, including code editing, browser-based developer verification and Sites publishing. The author supplied the concept, intended motion/sound language, successive corrections and trial feedback.
 
-Version 2 browser checks:
+AI-assisted work includes HTML/CSS/JavaScript, miniature website layouts, WebGL composition, procedural sound, state checks, standalone packaging and documentation. No generated-photo assets or copied implementation from researched tab managers were used.
 
-- Right-click opened the menu and kept the tab count at 10; favorite and pin actions were applied without closing the page.
-- Scrolling up on the globe changed the layout to a stationary row. The pinned Figma card occupied the right end, with its complete bounding box inside a 1280px viewport. Wheel input on a highlighted card changed its scale without leaving row mode. Scrolling down on the globe restored orbit.
-- The context-menu group picker combined Figma and GitHub into a two-member circular constellation without changing the total page count.
-- Dragging YouTube onto the constellation and staying over the target completed a half-second magnetic join: the group grew from two to three members, and the dragging state cleared. The remaining dwell may finish after release if the pointer stays on the target; leaving the target cancels it.
-- Clicking the circle expanded the three members. Clicking empty space collapsed the constellation. Visual QA moved the expanded cards away from the title panel.
-- Closing YouTube from the expanded group reduced the total count from 11 to 10 and the group from three to two. Undo restored 11 pages and three group members.
-- Favorite launch increased the total page count from 10 to 11, showed the local Figma destination, and returned successfully. Removing a favorite in management left the opened cards intact.
-- Group renaming was changed to save on input, without rebuilding the focused input. The displayed group name updated to `创作星群` immediately.
-- Sound can be turned off and on from unified settings. Hover, enter, return, grouping and flight use distinct synthesis paths. Audio quality still needs listening on the user's headphones; automated UI checks do not assess subjective sound similarity.
-- No browser console errors or warnings were observed during these interactions.
-- Reload restored the renamed three-member constellation, its pin and the favorite count. At a 390px viewport the unified settings panel and search field both stayed inside the viewport with no horizontal document overflow.
+**Suggestion kept:** combine a Three.js planet with projected DOM cards, retaining readable text, semantic controls and keyboard access while allowing spatial motion.
 
-These remain developer checks. An independent user trial has not been fabricated or substituted.
+**Suggestions changed or rejected:**
+
+- Immediate real-site navigation would interrupt testing. Entry instead reaches a labeled local preview with an explicit external link.
+- Destructive right-click became a management menu.
+- Permanent center exclusion, long constellation trails and elaborate line-entry motion were removed or simplified after author feedback.
+- The fixed Earth became configurable following the reported participant suggestion.
+
+AI output was iterated against visible behavior; the first proposal was not treated as final.
+
+## 6. Implementation and ordinary errors
+
+- State logic is separate from rendering. Cards, groups and favorites have independent IDs; singleton groups reconcile safely.
+- Empty search and unsupported URL schemes give feedback without navigation. Search terms are encoded.
+- The 36-card limit explains why another card cannot be added.
+- One-step Undo restores the last closed card or group. Collecting an existing favorite does not duplicate or delete it.
+- Persistence failures are caught. Migration sanitizes URLs and bounds zoom values.
+- Reduced motion follows the OS unless overridden. Sound respects browser autoplay restrictions. WebGL failure has a static fallback.
+- All standalone runtime assets are embedded. The build uses Node built-ins and syntax-validates the assembled script; licenses remain in the repository.
+
+## 7. Developer verification
+
+These checks are separate from the reported user trial.
+
+Earlier browser checks covered entry/return, blank and invalid search, undo, group creation/expansion/collapse, group close/undo, independent favorites, pins, settings, persistence and 390px layouts. V2 exposed a focused rename input being rebuilt, which was fixed to save without replacing it.
+
+V3 checks include browser rendering of the standalone page and planet selector, successful drag-to-folder collection after half a second, non-overlapping pinned row bounds, and console inspection. Ten Node tests cover lossless grouping, singleton cleanup, favorites, safe migration/search, group pin/close, dense zoomed rows at 390/768/1280px, zoom persistence and planet preference validation.
+
+The single-file bundle is syntax-checked during build. Its HTTP preview works. The testing browser blocks file: URLs, so actual double-click execution is **not claimed as a completed test**. Subjective headphone audio and wider device/browser coverage remain human review items.
+
+## 8. Remaining scope
+
+This is not yet an extension or an always-on-top desktop window. Actual tab discovery, screenshots, focus/close and startup integration need a separate extension implementation. Non-Earth planets are illustrative, not scientifically scaled or photographed. The assignment submission should link the GitHub repository containing source, screenshot and documents, not only the hosted prototype.

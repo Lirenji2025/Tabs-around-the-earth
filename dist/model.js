@@ -3,7 +3,7 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 export function cleanCard(card){
   if(!card||typeof card.url!=='string'||typeof card.title!=='string')return null;
   try{const url=new URL(card.url);if(!['http:','https:'].includes(url.protocol))return null;}catch{return null;}
-  const result={id:typeof card.id==='string'?card.id:uid(),title:card.title.slice(0,200),url:card.url,domain:typeof card.domain==='string'?card.domain:new URL(card.url).hostname,symbol:typeof card.symbol==='string'?card.symbol.slice(0,3):'↗',color:/^#[\da-f]{3,8}$/i.test(card.color)?card.color:'#b8d2e5',pinned:card.pinned===true,zoom:clamp(Number(card.zoom)||1,.78,1.35),groupId:typeof card.groupId==='string'?card.groupId:null};
+  const result={id:typeof card.id==='string'?card.id:uid(),title:card.title.slice(0,200),url:card.url,domain:typeof card.domain==='string'?card.domain:new URL(card.url).hostname,symbol:typeof card.symbol==='string'?card.symbol.slice(0,3):'↗',color:/^#[\da-f]{3,8}$/i.test(card.color)?card.color:'#b8d2e5',pinned:card.pinned===true,zoom:clamp(Number(card.zoom)||1,.25,1.8),groupId:typeof card.groupId==='string'?card.groupId:null};
   for(const key of ['kind','subtitle','description','query','engine'])if(typeof card[key]==='string')result[key]=card[key].slice(0,1000);
   if(!result.kind&&typeof card.id==='string'&&!card.id.startsWith('new-'))result.kind=card.id;
   return result;
@@ -14,7 +14,7 @@ export function normalizeState(saved,defaults){
   const groupSeen=new Set();const groups=(Array.isArray(saved?.groups)?saved.groups:[]).filter(g=>g&&typeof g.id==='string'&&!groupSeen.has(g.id)&&groupSeen.add(g.id)).map(g=>({id:g.id,name:typeof g.name==='string'?g.name.slice(0,40):'新星群'}));
   const favSeen=new Set();const favorites=(Array.isArray(saved?.favorites)?saved.favorites:[]).map(cleanCard).filter(c=>c&&!favSeen.has(c.url)&&favSeen.add(c.url)).slice(0,100).map(c=>({...c,groupId:null,pinned:false,zoom:1}));
   const p=saved?.preferences||saved||{};
-  const state={schema:2,cards,groups,favorites,preferences:{sound:p.sound!==false,autoOrbit:p.autoOrbit!==false,reducedMotion:typeof p.reducedMotion==='boolean'?p.reducedMotion:null,engine:['Bing','Google','DuckDuckGo'].includes(p.engine)?p.engine:'Bing'}};
+  const state={schema:2,cards,groups,favorites,preferences:{planet:['mercury','venus','earth','mars','jupiter','saturn','uranus','neptune'].includes(p.planet)?p.planet:'earth',sound:p.sound!==false,autoOrbit:p.autoOrbit!==false,reducedMotion:typeof p.reducedMotion==='boolean'?p.reducedMotion:null,engine:['Bing','Google','DuckDuckGo'].includes(p.engine)?p.engine:'Bing'}};
   reconcile(state);return state;
 }
 export function reconcile(state){
@@ -64,18 +64,15 @@ export function searchTarget(query,engine='Bing'){
   const base={Bing:'https://www.bing.com/search?q=',Google:'https://www.google.com/search?q=',DuckDuckGo:'https://duckduckgo.com/?q='}[engine]||'https://www.bing.com/search?q=';
   return{url:base+encodeURIComponent(q),domain:new URL(base).hostname,title:q,query:q,kind:'search',engine};
 }
-export function rowPositions(list,width,height){
-  const normal=list.filter(e=>!e.pinned),pinned=list.filter(e=>e.pinned),n=list.length;
-  const margin=width<600?24:72,available=width-margin*2;
-  const natural=width<600?112:155;
-  const pinWidth=Math.min(natural,available/Math.max(1,pinned.length+(normal.length?1:0)));
-  const reserved=pinned.length*pinWidth;
-  const free=Math.max(normal.length?natural*.7:0,available-reserved);
-  const normalScale=Math.min(1,(normal.length<=1?free:natural)/natural);
-  const step=normal.length>1?Math.min(natural,Math.max(8,(free-natural*normalScale)/(normal.length-1))):0;
+export function rowPositions(list,width,height,focus=null){
+  const ordered=[...list].sort((a,b)=>Number(a.pinned)-Number(b.pinned));
+  const margin=width<600?16:48,available=width-margin*2;
+  const gap=Math.min(width<600?7:14,available/Math.max(1,ordered.length*5));
+  const sizes=ordered.map(e=>(e.type==='group'?144:192)*.78*(e.zoom||1)*(e.id===focus?1.18:1));
+  const fit=Math.min(1,(available-gap*Math.max(0,ordered.length-1))/(sizes.reduce((a,b)=>a+b,0)||1));
+  const total=sizes.reduce((a,b)=>a+b,0)*fit+gap*Math.max(0,ordered.length-1);
+  let x=ordered.some(e=>e.pinned)?width-margin-total:(width-total)/2;
   const points=new Map();
-  normal.forEach((e,i)=>points.set(e.id,{x:margin+natural*normalScale/2+i*step,y:height*.47,scale:natural*normalScale/192}));
-  pinned.forEach((e,i)=>points.set(e.id,{x:width-margin-reserved+pinWidth*(i+.5),y:height*.47,scale:pinWidth/192}));
-  if(!pinned.length&&normal.length){const first=points.get(normal[0].id),last=points.get(normal.at(-1).id),shift=width/2-(first.x+last.x)/2;points.forEach(p=>p.x+=shift);}
+  ordered.forEach((e,i)=>{const size=sizes[i]*fit;points.set(e.id,{x:x+size/2,y:height*.47,scale:.78*fit});x+=size+gap;});
   return points;
 }
