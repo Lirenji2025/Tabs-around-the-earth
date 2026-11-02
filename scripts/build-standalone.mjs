@@ -9,6 +9,7 @@ const read=p=>fs.readFileSync(path.join(dist,p),'utf8');
 const data=(p,mime)=>`data:${mime};base64,${fs.readFileSync(path.join(dist,p)).toString('base64')}`;
 const earth=data('assets/earth.jpg','image/jpeg');
 const coast=read('assets/land.geojson');
+const planetAssets=fs.readdirSync(path.join(dist,'assets/planets')).filter(p=>/\.(jpg|png)$/.test(p)).map(p=>['./assets/planets/'+p,data('assets/planets/'+p,p.endsWith('.png')?'image/png':'image/jpeg')]);
 const modules=new Map();
 // This deliberately small packer supports the static named imports/exports in
 // this checked-in project. Unsupported syntax fails instead of silently shipping.
@@ -27,12 +28,16 @@ function bundle(id){
   source=source.replace(/^export\s*\{([^}]+)\};?\r?$/gm,(_,names)=>{exports.push(...names.split(',').map(s=>{const parts=s.trim().split(/\s+as\s+/);return parts.length===2?`${parts[1]}:${parts[0]}`:parts[0];}));return '';});
   if(/^\s*(?:import|export)\s/m.test(source))throw Error(`Unresolved module syntax in ${id}`);
   source=source.replace("fetch('./assets/land.geojson').then(r=>r.json())",`Promise.resolve(${coast.trim()})`).replaceAll('./assets/earth.jpg',earth);
+  for(const [file,url] of planetAssets)source=source.replaceAll(file,url);
   modules.set(id,`modules[${JSON.stringify(id)}]=(()=>{\n${source}\nreturn {${exports.join(',')}};\n})();`);
 }
 bundle('orbit.js');
 const js=`(()=>{'use strict';const modules={};\n${[...modules.values()].join('\n')}\n})();`;
 new vm.Script(js,{filename:'standalone-bundle.js'});
 let html=read('index.html').replace('<link rel="icon" type="image/svg+xml" href="./assets/orbit.svg">',`<link rel="icon" type="image/svg+xml" href="${data('assets/orbit.svg','image/svg+xml')}">`);
+// Keep the downloadable file self-contained; the public Pages entry uses the
+// modular build so only the selected HD planet is fetched.
+html=html.replace('<head>','<head>\n<script>if(location.protocol==="https:"&&location.hostname==="lirenji2025.github.io")location.replace(new URL("dist/index.html",location.href).href);</script>');
 for(const name of ['style.css','v2.css'])html=html.replace(`<link rel="stylesheet" href="./${name}">`,`<style>\n${read(name).replaceAll('./assets/earth.jpg',earth)}\n</style>`);
 html=html.replace('<script type="module" src="./orbit.js"></script>',()=>`<!-- Three.js: MIT; see dist/assets/THREE-LICENSE.txt and CREDITS.md. -->\n<script>\n${js.replace(/<\/script/gi,'<\\/script')}\n</script>`);
 html=html.replace('href="./" aria-label="ORBIT 首页"','href="./index.html" aria-label="ORBIT 首页"');

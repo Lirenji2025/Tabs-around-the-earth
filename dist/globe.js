@@ -1,10 +1,10 @@
 import * as THREE from './assets/three.module.js';
-import {planets,planetTexture} from './planets.js';
+import {planets} from './planets.js';
 export function createGlobe(notify=()=>{}){
 const $=s=>document.querySelector(s);
 let width=innerWidth,height=innerHeight,scene,camera,renderer,earth,earthGroup,starGroup,atmosphere,orbitGroup,landLines,rendererReady=false;
 let rotation=.9;
-let planetId='earth',earthTexture,generatedTexture,rings;
+let planetId='earth',earthTexture,generatedTexture,rings,assetGeneration=0;
 const toast=notify;
 function setupThree() {
   scene = new THREE.Scene();
@@ -22,8 +22,11 @@ function setupThree() {
     fragmentShader:`uniform sampler2D map;uniform float earthMode;uniform vec3 sunDirection;uniform float time;varying vec2 vUv;varying vec3 vNormal;varying vec3 vPosition;void main(){vec3 n=normalize(vNormal);vec3 c=texture2D(map,vUv).rgb;float daylight=smoothstep(-.3,.85,dot(n,sunDirection));float land=smoothstep(.02,.17,c.g-c.b*.64);vec3 ocean=vec3(.027,.085,.135)+c*vec3(.16,.33,.46);vec3 terrain=mix(ocean,mix(c,vec3(.31,.42,.42),.56),land*.7);terrain=mix(c,terrain,earthMode);vec3 color=terrain*(.13+daylight*1.05);float fresnel=pow(1.0-max(0.0,dot(n,normalize(cameraPosition-vPosition))),3.4);color+=vec3(.055,.15,.23)*fresnel*(.3+daylight*.7);gl_FragColor=vec4(color,1.0);}`
   });
   earth = new THREE.Mesh(new THREE.SphereGeometry(1.8,96,64),material);earth.rotation.y=.9;earthGroup.add(earth);
-  rings=new THREE.Group();earthGroup.add(rings);rings.rotation.x=1.15;rings.rotation.y=-.25;rings.rotation.z=.25;rings.visible=false;
-  for(let i=0;i<24;i++){const ring=new THREE.Mesh(new THREE.RingGeometry(2.15+i*.041,2.18+i*.041,160),new THREE.MeshBasicMaterial({color:i%3===0?0xa58e66:0xcabd9a,transparent:true,opacity:i%5===0?.12:.45,side:THREE.DoubleSide,depthWrite:false}));rings.add(ring);}
+  rings=new THREE.Group();earthGroup.add(rings);rings.rotation.x=Math.PI/2;rings.visible=false;
+  const ringMap=new THREE.TextureLoader().load('./assets/planets/8k_saturn_ring_alpha.png');ringMap.colorSpace=THREE.SRGBColorSpace;ringMap.anisotropy=8;
+  const ringGeometry=new THREE.RingGeometry(2.1,3.55,256,1),ringPositions=ringGeometry.attributes.position,ringUV=ringGeometry.attributes.uv;
+  for(let i=0;i<ringPositions.count;i++){const radius=Math.hypot(ringPositions.getX(i),ringPositions.getY(i));ringUV.setXY(i,(radius-2.1)/1.45,.5);}
+  rings.add(new THREE.Mesh(ringGeometry,new THREE.MeshBasicMaterial({map:ringMap,color:0xddd7cb,transparent:true,alphaTest:.025,side:THREE.DoubleSide,depthWrite:false})));
   atmosphere = new THREE.Mesh(new THREE.SphereGeometry(1.845,64,48),new THREE.ShaderMaterial({
     transparent:true,side:THREE.BackSide,blending:THREE.AdditiveBlending,depthWrite:false,
     vertexShader:`varying vec3 vNormal;varying vec3 vWorldPosition;void main(){vNormal=normalize(mat3(modelMatrix)*normal);vWorldPosition=(modelMatrix*vec4(position,1.0)).xyz;gl_Position=projectionMatrix*viewMatrix*vec4(vWorldPosition,1.0);}`,
@@ -72,18 +75,31 @@ try{setupThree();}catch(error){$('#planet-fallback').hidden=false;camera=new THR
 window.addEventListener('resize',resize);
 return{
 setPlanet(id){
-  const p=planets.find(p=>p.id===id)||planets[2];planetId=p.id;
-  const canvas=p.id==='earth'?null:planetTexture(p);
-  const fallback=$('.fallback-planet');fallback.style.backgroundImage=p.id==='earth'?"url('./assets/earth.jpg')":`url(${canvas.toDataURL()})`;
+  const p=planets.find(p=>p.id===id)||planets[2];planetId=p.id;const generation=++assetGeneration;
+  const fallback=$('.fallback-planet');fallback.style.backgroundImage=`url("${p.texture||'./assets/earth.jpg'}")`;
   if(!earth)return;
-  generatedTexture?.dispose();generatedTexture=null;
-  if(canvas){generatedTexture=new THREE.CanvasTexture(canvas);generatedTexture.colorSpace=THREE.SRGBColorSpace;}
-  earth.material.uniforms.map.value=generatedTexture||earthTexture;earth.material.uniforms.earthMode.value=p.id==='earth'?1:0;
-  earth.children.forEach(n=>n.visible=p.id==='earth');rings.visible=p.id==='saturn';atmosphere.visible=!['mercury','mars'].includes(p.id);
+  earth.material.uniforms.earthMode.value=p.id==='earth'?1:0;
+  if(p.id==='earth'){generatedTexture?.dispose();generatedTexture=null;earth.material.uniforms.map.value=earthTexture;$('#space').dataset.texture='earth';}
+  else{
+    $('#space').dataset.texture='loading';
+    new THREE.TextureLoader().load(p.texture,texture=>{
+      if(generation!==assetGeneration){texture.dispose();return;}
+      texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
+      generatedTexture?.dispose();generatedTexture=texture;earth.material.uniforms.map.value=texture;
+      $('#space').dataset.texture=p.id;
+    },undefined,()=>{if(generation===assetGeneration){$('#space').dataset.texture='error';toast(`${p.name}高清纹理加载失败，请重新选择。`);}});
+  }
+  earth.children.forEach(n=>n.visible=p.id==='earth');rings.visible=p.id==='saturn';atmosphere.visible=p.id==='earth';
 },
 project(v){const p=v.clone().project(camera);return{x:(p.x*.5+.5)*width,y:(-.5*p.y+.5)*height,depth:v.z};},
 get radius(){return height*.5/Math.tan(20*Math.PI/180)*1.8/camera.position.z*(width<600?1.45:1.30);},
-render(dt,{yaw,pitch,time,reduced,row}){if(!earth)return;rotation+=dt*(reduced?0:.012);earth.rotation.y=rotation+yaw*.52;earth.rotation.x=pitch*.45;earth.rotation.z=.13;starGroup.rotation.y=time*.0004;orbitGroup.rotation.y=yaw*.3;orbitGroup.visible=row<.98;earth.material.uniforms.time.value=time;renderer.render(scene,camera);},
+render(dt,{yaw,pitch,time,reduced,row}){
+  if(!earth)return;rotation+=dt*(reduced?0:.012);
+  // Shared axial orientation keeps the surface, atmosphere and rings together.
+  earthGroup.rotation.set(.36+pitch*.85,yaw*.7,.36,'YXZ');earth.rotation.set(0,rotation,0);
+  $('#space').dataset.orientation=[.36+pitch*.85,yaw*.7,.36].map(v=>v.toFixed(4)).join(',');
+  starGroup.rotation.y=time*.0004;orbitGroup.rotation.y=yaw*.3;orbitGroup.visible=row<.98;earth.material.uniforms.time.value=time;renderer.render(scene,camera);
+},
 camera
 };
 }

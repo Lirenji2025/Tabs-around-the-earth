@@ -292,7 +292,7 @@ function hideSettings(){$('#settings-panel').hidden=true;$('#settings-button').s
 $('#settings-button').addEventListener('click',()=>$('#settings-panel').hidden?showSettings():hideSettings());$('#close-settings').addEventListener('click',hideSettings);
 document.querySelector('.settings-tabs').addEventListener('click',ev=>{const tab=ev.target.closest('[data-settings-tab]')?.dataset.settingsTab;if(tab)showSettings(tab);});
 function renderManagement(){
-  $('#default-engine').value=state.preferences.engine;
+  syncEngine();
   $('#planet-select').value=state.preferences.planet;
   $('#sound-toggle').checked=state.preferences.sound;$('#auto-orbit').checked=state.preferences.autoOrbit;$('#reduce-motion').checked=reduced;
   $('#groups-panel').innerHTML=`<p class="manage-help">拖动卡片并停留半秒，或使用右键菜单建组。可重命名、展开或解散星群。</p>${state.groups.length?state.groups.map(g=>`<div class="manage-row"><span class="manage-symbol">◉</span><div class="manage-main"><input aria-label="重命名 ${esc(g.name)}" data-rename-group="${g.id}" value="${esc(g.name)}" maxlength="40"><small>${members(state,g.id).length} 个网页</small></div><button data-manage="expand" data-id="${g.id}">展开</button><button data-manage="dissolve" data-id="${g.id}">解散</button></div>`).join(''):'<div class="empty-state"><b>尚无星群</b>把两个世界吸附到一起，开始整理。</div>'}`;
@@ -327,7 +327,7 @@ $('#reset-button').addEventListener('click',()=>{if(busy){toast('请先等待飞
 const help=$('#help-dialog');$('#help-button').addEventListener('click',()=>{hideSettings();help.showModal();});help.querySelector('.dialog-close').addEventListener('click',()=>help.close());$('#start-exploring').addEventListener('click',()=>help.close());help.addEventListener('click',ev=>{if(ev.target===help){const r=help.getBoundingClientRect();if(ev.clientX<r.left||ev.clientX>r.right||ev.clientY<r.top||ev.clientY>r.bottom)help.close();}});
 $('#engine-button').addEventListener('click',()=>{const m=$('#engine-menu');m.hidden=!m.hidden;$('#engine-button').setAttribute('aria-expanded',String(!m.hidden));});
 $('#engine-menu').addEventListener('click',ev=>{const e=ev.target.closest('[data-engine]')?.dataset.engine;if(e){setEngine(e);$('#engine-menu').hidden=true;$('#engine-button').setAttribute('aria-expanded','false');$('#search-input').focus();}});
-$('#default-engine').addEventListener('change',ev=>setEngine(ev.target.value));
+$('#default-engine').addEventListener('click',ev=>{const engine=ev.target.closest('[data-default-engine]')?.dataset.defaultEngine;if(engine)setEngine(engine);});
 function setEngine(engine){
   if(!['Bing','Google','Baidu','DuckDuckGo'].includes(engine))return;
   state.preferences.engine=engine;syncEngine();persist();toast(`默认搜索引擎已设为 ${engine==='Baidu'?'百度':engine}`);
@@ -335,7 +335,8 @@ function setEngine(engine){
 function syncEngine(){
   const engine=state.preferences.engine,label=engine==='Baidu'?'百度':engine;
   $('#engine-button').innerHTML=`${label} <span>⌄</span>`;
-  $('#default-engine').value=engine;
+  document.querySelectorAll('[data-default-engine]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.defaultEngine===engine)));
+  $('#engine-saved').textContent=`当前默认：${label} · 已保存`;
   document.querySelectorAll('[data-engine]').forEach(button=>{const selected=button.dataset.engine===engine;button.setAttribute('aria-pressed',String(selected));button.innerHTML=`${button.dataset.engine==='Baidu'?'百度':button.dataset.engine}${selected?' <span>默认 ✓</span>':''}`;});
 }
 function syncPlanet(){

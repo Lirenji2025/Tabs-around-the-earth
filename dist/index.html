@@ -59,14 +59,14 @@
       <div class="panel-heading"><span>设置与管理</span><button id="close-settings" aria-label="关闭设置">×</button></div>
       <nav class="settings-tabs" aria-label="管理分类"><button data-settings-tab="preferences" class="active" aria-pressed="true">偏好</button><button data-settings-tab="groups" aria-pressed="false">星群</button><button data-settings-tab="favorites" aria-pressed="false">收藏</button><button data-settings-tab="pins" aria-pressed="false">置顶</button></nav>
       <div id="preferences-panel" class="settings-content">
-        <label class="planet-setting" for="default-engine"><span>默认搜索引擎<small>用于搜索栏 · 自动保存</small></span><select id="default-engine"><option value="Bing">Bing</option><option value="Google">Google</option><option value="Baidu">百度</option><option value="DuckDuckGo">DuckDuckGo</option></select></label>
+        <fieldset class="engine-setting"><legend>默认搜索引擎</legend><p>点击选择 · 自动保存并同步搜索栏</p><div id="default-engine" class="engine-options" role="group" aria-label="默认搜索引擎"><button type="button" data-default-engine="Bing" aria-pressed="false">Bing</button><button type="button" data-default-engine="Google" aria-pressed="false">Google</button><button type="button" data-default-engine="Baidu" aria-pressed="false">百度</button><button type="button" data-default-engine="DuckDuckGo" aria-pressed="false">DuckDuckGo</button></div><output id="engine-saved" aria-live="polite"></output></fieldset>
         <label class="planet-setting" for="planet-select"><span>选择你的星球<small>太阳系 · 八个不同的世界</small></span><select id="planet-select"><option value="mercury">水星</option><option value="venus">金星</option><option value="earth">地球</option><option value="mars">火星</option><option value="jupiter">木星</option><option value="saturn">土星</option><option value="uranus">天王星</option><option value="neptune">海王星</option></select></label>
         <label class="setting-row"><span><strong>声效</strong><small>低频掠过 · 空灵铜管 · 电磁吸附</small></span><input id="sound-toggle" type="checkbox" checked><span class="switch"></span></label>
         <label class="setting-row"><span><strong>自动公转</strong><small>球形轨道中，让世界缓缓流动</small></span><input id="auto-orbit" type="checkbox" checked><span class="switch"></span></label>
         <label class="setting-row"><span><strong>减少动态效果</strong><small>缩短飞行，保留交互</small></span><input id="reduce-motion" type="checkbox"><span class="switch"></span></label>
         <button id="help-button" class="settings-link">使用说明 <span>?</span></button>
         <button id="reset-button" class="settings-link">恢复全部示例标签页 <span>↺</span></button>
-        <p class="settings-note">收藏与置顶会保存在当前浏览器。首次点击后可播放声效；戴上耳机会有更完整的空间感。</p>
+        <p class="settings-note"><a href="https://www.solarsystemscope.com/textures/" target="_blank" rel="noopener noreferrer">行星贴图：Solar System Scope · CC BY 4.0 ↗</a><br>收藏与置顶会保存在当前浏览器。首次点击后可播放声效；戴上耳机会有更完整的空间感。</p>
       </div>
       <div id="groups-panel" class="settings-content" hidden></div><div id="favorites-panel" class="settings-content" hidden></div><div id="pins-panel" class="settings-content" hidden></div>
     </section>
