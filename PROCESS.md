@@ -108,3 +108,20 @@ This is not yet an extension or an always-on-top desktop window. Actual tab disc
 Added a default-search selector in Settings → Preferences, with Bing, Google, Baidu and DuckDuckGo. It shares the persisted engine preference with the existing search-bar shortcut. Both controls update each other and indicate the selected default; existing cards retain their original URLs. The generated standalone page is rebuilt from the same source.
 
 Browser verification: changing Settings to Baidu updated the search bar and survived reload; changing the search-bar shortcut to DuckDuckGo updated Settings. Google settings screenshot saved in search-settings.png. All four providers produced the expected encoded destinations; browser console contained no errors.
+
+
+## 10. Trial follow-up: ring control, realistic assets and search selection — 2026-11-02
+
+The author clarified that the previously reported inability to change the default search engine was also **user-trial feedback**. Further reported observations were that Saturn's ring did not follow dragging and that non-Earth planets looked cartoon-like and lacked impact. These are author-relayed observations; no new participant identity, timing or trial recording has been invented.
+
+Changes based on these observations:
+
+- Saturn's surface, atmosphere and ring now share one axial-orientation group. The planet's own spin remains separate. Dragging changes pitch/yaw of the whole planet-ring system, including when the drag begins over the visible ring region.
+- Replaced generated planet patterns and segmented rings with locally bundled Solar System Scope maps under CC BY 4.0. All seven non-Earth maps and the ring strip were checked for successful loading. Exact measured sizes and source hashes are in assets/planets/SOURCES.json; publisher filenames were not assumed to prove resolution.
+- Replaced the native engine select with four directly clickable buttons. The selected button shows a checkmark and a current-default/saved status; both this control and the search-bar shortcut use the same persistent preference. Prior automated selectOption checks alone did not establish that a user could successfully operate the native dropdown on their device. The exact cause of the reported device-specific failure was not reproduced, so it is not claimed as proven.
+
+Developer verification of this revision: clicked Baidu and Google buttons, confirmed highlight and search-bar updates, reloaded and confirmed Google persisted. Submitted a new Google query and a new Baidu query; their actual destination links used the selected provider with correctly encoded text. Loaded all seven image maps without console warnings/errors. A real pointer drag over Saturn's ring changed scene orientation from (0.3260, 0.2910, 0.3600) to (0.4706, 0.6291, 0.3600), with a visibly different ring plane. This is developer re-verification, not a claim that the participant has already retested the revised version.
+
+The root standalone HTML is rebuilt with embedded high-resolution maps, increasing its size from about 3.4 MB to about 41 MB. The modular hosted version loads the selected planet on demand; disposed and superseded texture loads are guarded to prevent a slower earlier choice from overwriting a newer selection.
+
+The rebuilt ~41 MB standalone HTTP preview also loaded its embedded 8K Mercury and Saturn maps successfully. The settings button flow worked there without a native select popup, with no console warnings/errors. GitHub Pages enters the modular build through an early redirect while the downloadable file stays self-contained for file-mode use.
