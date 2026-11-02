@@ -10,6 +10,7 @@
 
 **无需安装：** 下载本仓库（Code → Download ZIP），解压后用 Edge 或 Chrome 打开根目录的 **index.html**。这是约 3.43 MB 的完整单文件网页，包含脚本、样式、Three.js、地球纹理和海岸线；运行原型不需要联网或安装依赖。打开真实网站、使用真实搜索结果时需要网络。
 
+- [公开演示网页](https://lirenji2025.github.io/Tabs-around-the-earth/)
 - [GitHub 仓库](https://github.com/Lirenji2025/Tabs-around-the-earth)
 - [Sites 原型](https://orbital-earth-tabs.tealglass1.chatgpt.site/)：保留原有访问权限；评阅者可下载单文件使用。
 - 源代码入口为 `dist/orbit.js`；根目录 `index.html` 是从源码生成的可分发版本。
@@ -37,6 +38,7 @@
 | 关闭 / 撤销 / Ctrl或Cmd+Z | 云雾消散；可恢复最近关闭的卡片或星群 |
 | 移动鼠标 | 星座连线：最多 8 节点、约 230px 总路径、850ms 生命周期 |
 | 设置 → 选择你的星球 | 水星、金星、地球、火星、木星、土星、天王星、海王星；选择自动保存 |
+| 设置 → 默认搜索引擎 | 选择 Bing、Google、百度或 DuckDuckGo，自动保存并同步到搜索栏 |
 | 设置 | 声效、公转、减少动态效果、帮助、星群/收藏/置顶管理 |
 
 入场恢复第一版的 **散落远离 → 从远处沿弧线飞回轨道** 动画，可跳过或重播。普通轨道没有中心推力；搜索创建/关闭仍保留短暂排斥反馈。

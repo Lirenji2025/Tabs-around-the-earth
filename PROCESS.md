@@ -101,3 +101,10 @@ The single-file bundle is syntax-checked during build. Its HTTP preview works. T
 ## 8. Remaining scope
 
 This is not yet an extension or an always-on-top desktop window. Actual tab discovery, screenshots, focus/close and startup integration need a separate extension implementation. Non-Earth planets are illustrative, not scientifically scaled or photographed. The assignment submission should link the GitHub repository containing source, screenshot and documents, not only the hosted prototype.
+
+
+## 9. Default search engine — 2026-11-02
+
+Added a default-search selector in Settings → Preferences, with Bing, Google, Baidu and DuckDuckGo. It shares the persisted engine preference with the existing search-bar shortcut. Both controls update each other and indicate the selected default; existing cards retain their original URLs. The generated standalone page is rebuilt from the same source.
+
+Browser verification: changing Settings to Baidu updated the search bar and survived reload; changing the search-bar shortcut to DuckDuckGo updated Settings. Google settings screenshot saved in search-settings.png. All four providers produced the expected encoded destinations; browser console contained no errors.

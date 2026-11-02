@@ -79,7 +79,7 @@
         <button id="engine-button" type="button" aria-label="选择搜索引擎" aria-expanded="false">Bing <span>⌄</span></button>
         <button class="search-submit" type="submit" aria-label="搜索并进入新标签页"><svg viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button>
       </form>
-      <div class="engine-menu" id="engine-menu" hidden><button data-engine="Bing">Bing <span>默认</span></button><button data-engine="Google">Google</button><button data-engine="DuckDuckGo">DuckDuckGo</button></div>
+      <div class="engine-menu" id="engine-menu" aria-label="默认搜索引擎" hidden><button data-engine="Bing">Bing</button><button data-engine="Google">Google</button><button data-engine="Baidu">百度</button><button data-engine="DuckDuckGo">DuckDuckGo</button></div>
       <div class="interaction-hints"><span>拖动旋转</span><i></i><span>滚轮收束 / 缩放</span><i></i><span>拖停 ½ 秒建组</span><i></i><span>右键管理</span></div>
     </section>
 
@@ -89,6 +89,7 @@
       <div class="panel-heading"><span>设置与管理</span><button id="close-settings" aria-label="关闭设置">×</button></div>
       <nav class="settings-tabs" aria-label="管理分类"><button data-settings-tab="preferences" class="active" aria-pressed="true">偏好</button><button data-settings-tab="groups" aria-pressed="false">星群</button><button data-settings-tab="favorites" aria-pressed="false">收藏</button><button data-settings-tab="pins" aria-pressed="false">置顶</button></nav>
       <div id="preferences-panel" class="settings-content">
+        <label class="planet-setting" for="default-engine"><span>默认搜索引擎<small>用于搜索栏 · 自动保存</small></span><select id="default-engine"><option value="Bing">Bing</option><option value="Google">Google</option><option value="Baidu">百度</option><option value="DuckDuckGo">DuckDuckGo</option></select></label>
         <label class="planet-setting" for="planet-select"><span>选择你的星球<small>太阳系 · 八个不同的世界</small></span><select id="planet-select"><option value="mercury">水星</option><option value="venus">金星</option><option value="earth">地球</option><option value="mars">火星</option><option value="jupiter">木星</option><option value="saturn">土星</option><option value="uranus">天王星</option><option value="neptune">海王星</option></select></label>
         <label class="setting-row"><span><strong>声效</strong><small>低频掠过 · 空灵铜管 · 电磁吸附</small></span><input id="sound-toggle" type="checkbox" checked><span class="switch"></span></label>
         <label class="setting-row"><span><strong>自动公转</strong><small>球形轨道中，让世界缓缓流动</small></span><input id="auto-orbit" type="checkbox" checked><span class="switch"></span></label>
@@ -53219,7 +53220,7 @@ function normalizeState(saved,defaults){
   const groupSeen=new Set();const groups=(Array.isArray(saved?.groups)?saved.groups:[]).filter(g=>g&&typeof g.id==='string'&&!groupSeen.has(g.id)&&groupSeen.add(g.id)).map(g=>({id:g.id,name:typeof g.name==='string'?g.name.slice(0,40):'新星群'}));
   const favSeen=new Set();const favorites=(Array.isArray(saved?.favorites)?saved.favorites:[]).map(cleanCard).filter(c=>c&&!favSeen.has(c.url)&&favSeen.add(c.url)).slice(0,100).map(c=>({...c,groupId:null,pinned:false,zoom:1}));
   const p=saved?.preferences||saved||{};
-  const state={schema:2,cards,groups,favorites,preferences:{planet:['mercury','venus','earth','mars','jupiter','saturn','uranus','neptune'].includes(p.planet)?p.planet:'earth',sound:p.sound!==false,autoOrbit:p.autoOrbit!==false,reducedMotion:typeof p.reducedMotion==='boolean'?p.reducedMotion:null,engine:['Bing','Google','DuckDuckGo'].includes(p.engine)?p.engine:'Bing'}};
+  const state={schema:2,cards,groups,favorites,preferences:{planet:['mercury','venus','earth','mars','jupiter','saturn','uranus','neptune'].includes(p.planet)?p.planet:'earth',sound:p.sound!==false,autoOrbit:p.autoOrbit!==false,reducedMotion:typeof p.reducedMotion==='boolean'?p.reducedMotion:null,engine:['Bing','Google','Baidu','DuckDuckGo'].includes(p.engine)?p.engine:'Bing'}};
   reconcile(state);return state;
 }
 function reconcile(state){
@@ -53266,7 +53267,7 @@ function searchTarget(query,engine='Bing'){
   }
   if(/^[a-z][a-z\d+.-]*:/i.test(q))return null;
   if(/^[\w-]+(\.[\w-]+)+(\/[\S]*)?$/.test(q)){const u=new URL('https://'+q);return{url:u.href,domain:u.hostname,title:u.hostname.replace(/^www\./,''),kind:'web'};}
-  const base={Bing:'https://www.bing.com/search?q=',Google:'https://www.google.com/search?q=',DuckDuckGo:'https://duckduckgo.com/?q='}[engine]||'https://www.bing.com/search?q=';
+  const base={Baidu:'https://www.baidu.com/s?wd=',Bing:'https://www.bing.com/search?q=',Google:'https://www.google.com/search?q=',DuckDuckGo:'https://duckduckgo.com/?q='}[engine]||'https://www.bing.com/search?q=';
   return{url:base+encodeURIComponent(q),domain:new URL(base).hostname,title:q,query:q,kind:'search',engine};
 }
 function rowPositions(list,width,height,focus=null){
@@ -53813,6 +53814,7 @@ function hideSettings(){$('#settings-panel').hidden=true;$('#settings-button').s
 $('#settings-button').addEventListener('click',()=>$('#settings-panel').hidden?showSettings():hideSettings());$('#close-settings').addEventListener('click',hideSettings);
 document.querySelector('.settings-tabs').addEventListener('click',ev=>{const tab=ev.target.closest('[data-settings-tab]')?.dataset.settingsTab;if(tab)showSettings(tab);});
 function renderManagement(){
+  $('#default-engine').value=state.preferences.engine;
   $('#planet-select').value=state.preferences.planet;
   $('#sound-toggle').checked=state.preferences.sound;$('#auto-orbit').checked=state.preferences.autoOrbit;$('#reduce-motion').checked=reduced;
   $('#groups-panel').innerHTML=`<p class="manage-help">拖动卡片并停留半秒，或使用右键菜单建组。可重命名、展开或解散星群。</p>${state.groups.length?state.groups.map(g=>`<div class="manage-row"><span class="manage-symbol">◉</span><div class="manage-main"><input aria-label="重命名 ${esc(g.name)}" data-rename-group="${g.id}" value="${esc(g.name)}" maxlength="40"><small>${members(state,g.id).length} 个网页</small></div><button data-manage="expand" data-id="${g.id}">展开</button><button data-manage="dissolve" data-id="${g.id}">解散</button></div>`).join(''):'<div class="empty-state"><b>尚无星群</b>把两个世界吸附到一起，开始整理。</div>'}`;
@@ -53846,8 +53848,18 @@ $('#reduce-motion').addEventListener('change',ev=>{reduced=ev.target.checked;sta
 $('#reset-button').addEventListener('click',()=>{if(busy){toast('请先等待飞行结束，或跳过入场。');return;}state.cards=normalizeState(null,defaults.map(c=>({...c,kind:c.id}))).cards;state.groups=[];lastClosed=null;openGroup=null;updateGroupCaption();metadataChanged();hideSettings();replay();toast('已恢复 12 个示例网页，收藏夹保留。');});
 const help=$('#help-dialog');$('#help-button').addEventListener('click',()=>{hideSettings();help.showModal();});help.querySelector('.dialog-close').addEventListener('click',()=>help.close());$('#start-exploring').addEventListener('click',()=>help.close());help.addEventListener('click',ev=>{if(ev.target===help){const r=help.getBoundingClientRect();if(ev.clientX<r.left||ev.clientX>r.right||ev.clientY<r.top||ev.clientY>r.bottom)help.close();}});
 $('#engine-button').addEventListener('click',()=>{const m=$('#engine-menu');m.hidden=!m.hidden;$('#engine-button').setAttribute('aria-expanded',String(!m.hidden));});
-$('#engine-menu').addEventListener('click',ev=>{const e=ev.target.closest('[data-engine]')?.dataset.engine;if(e){state.preferences.engine=e;syncEngine();persist();$('#engine-menu').hidden=true;$('#engine-button').setAttribute('aria-expanded','false');$('#search-input').focus();}});
-function syncEngine(){$('#engine-button').innerHTML=`${state.preferences.engine} <span>⌄</span>`;}
+$('#engine-menu').addEventListener('click',ev=>{const e=ev.target.closest('[data-engine]')?.dataset.engine;if(e){setEngine(e);$('#engine-menu').hidden=true;$('#engine-button').setAttribute('aria-expanded','false');$('#search-input').focus();}});
+$('#default-engine').addEventListener('change',ev=>setEngine(ev.target.value));
+function setEngine(engine){
+  if(!['Bing','Google','Baidu','DuckDuckGo'].includes(engine))return;
+  state.preferences.engine=engine;syncEngine();persist();toast(`默认搜索引擎已设为 ${engine==='Baidu'?'百度':engine}`);
+}
+function syncEngine(){
+  const engine=state.preferences.engine,label=engine==='Baidu'?'百度':engine;
+  $('#engine-button').innerHTML=`${label} <span>⌄</span>`;
+  $('#default-engine').value=engine;
+  document.querySelectorAll('[data-engine]').forEach(button=>{const selected=button.dataset.engine===engine;button.setAttribute('aria-pressed',String(selected));button.innerHTML=`${button.dataset.engine==='Baidu'?'百度':button.dataset.engine}${selected?' <span>默认 ✓</span>':''}`;});
+}
 function syncPlanet(){
   const p=planets.find(p=>p.id===state.preferences.planet)||planets[2];
   globe.setPlanet(p.id);$('.planet-caption strong').textContent=p.label;
