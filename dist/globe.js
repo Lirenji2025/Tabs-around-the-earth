@@ -1,10 +1,18 @@
 import * as THREE from './assets/three.module.js';
 import {planets} from './planets.js';
+import {trackballPoint,ArcballRotation} from './arcball.js';
 export function createGlobe(notify=()=>{}){
 const $=s=>document.querySelector(s);
 let width=innerWidth,height=innerHeight,scene,camera,renderer,earth,earthGroup,starGroup,atmosphere,orbitGroup,landLines,rendererReady=false;
 let rotation=.9;
 let planetId='earth',earthTexture,generatedTexture,rings,assetGeneration=0;
+const userRotation=new ArcballRotation();
+const initialOrientation=new THREE.Quaternion().setFromEuler(new THREE.Euler(.36,.252,.36,'YXZ'));
+function dragPoint(x,y){
+  const center=new THREE.Vector3(0,.26,0).project(camera);
+  const radius=height*.5/Math.tan(20*Math.PI/180)*1.8/camera.position.z*(width<600?1.45:1.30);
+  return trackballPoint(x,y,width/2,(-center.y*.5+.5)*height,Math.max(80,radius*1.35));
+}
 const toast=notify;
 function setupThree() {
   scene = new THREE.Scene();
@@ -74,6 +82,9 @@ if(earthGroup){earthGroup.position.y=.26;earthGroup.scale.setScalar(width<600?1.
 try{setupThree();}catch(error){$('#planet-fallback').hidden=false;camera=new THREE.PerspectiveCamera(40,width/height,.1,180);resize();notify('已启用轻量地球视图，卡片交互仍可使用。');}
 window.addEventListener('resize',resize);
 return{
+beginDrag(x,y){userRotation.begin(dragPoint(x,y));},
+dragTo(x,y){userRotation.move(dragPoint(x,y));},
+endDrag(){userRotation.end();},
 setPlanet(id){
   const p=planets.find(p=>p.id===id)||planets[2];planetId=p.id;const generation=++assetGeneration;
   const fallback=$('.fallback-planet');fallback.style.backgroundImage=`url("${p.texture||'./assets/earth.jpg'}")`;
@@ -96,8 +107,9 @@ get radius(){return height*.5/Math.tan(20*Math.PI/180)*1.8/camera.position.z*(wi
 render(dt,{yaw,pitch,time,reduced,row}){
   if(!earth)return;rotation+=dt*(reduced?0:.012);
   // Shared axial orientation keeps the surface, atmosphere and rings together.
-  earthGroup.rotation.set(.36+pitch*.85,yaw*.7,.36,'YXZ');earth.rotation.set(0,rotation,0);
-  $('#space').dataset.orientation=[.36+pitch*.85,yaw*.7,.36].map(v=>v.toFixed(4)).join(',');
+  earthGroup.quaternion.copy(initialOrientation).premultiply(userRotation.orientation);earth.rotation.set(0,rotation,0);
+  $('#space').dataset.orientation=earthGroup.quaternion.toArray().map(v=>v.toFixed(4)).join(',');
+  $('#space').dataset.ringNormal=new THREE.Vector3(0,1,0).applyQuaternion(earthGroup.quaternion).toArray().map(v=>v.toFixed(4)).join(',');
   starGroup.rotation.y=time*.0004;orbitGroup.rotation.y=yaw*.3;orbitGroup.visible=row<.98;earth.material.uniforms.time.value=time;renderer.render(scene,camera);
 },
 camera

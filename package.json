@@ -4,5 +4,10 @@
   "private": true,
   "description": "An interactive spatial new-tab prototype with an orbiting Earth.",
   "type": "module",
-  "scripts": {"dev": "node server.mjs", "build":"node scripts/build-standalone.mjs", "check": "node --check dist/orbit.js", "test":"node --test tests/model.test.mjs"}
+  "scripts": {
+    "dev": "node server.mjs",
+    "build": "node scripts/build-standalone.mjs",
+    "check": "node --check dist/orbit.js",
+    "test": "node --test tests/model.test.mjs tests/arcball.test.mjs"
+  }
 }

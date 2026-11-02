@@ -8,7 +8,7 @@
   <title>ORBIT — 你的世界，正在轨道上</title>
   <link rel="icon" type="image/svg+xml" href="./assets/orbit.svg">
   <link rel="stylesheet" href="./style.css">
-  <link rel="stylesheet" href="./v2.css">
+  <link rel="stylesheet" href="./v2.css?v=ring-arcball-2">
 </head>
 <body>
   <div id="app">
@@ -75,13 +75,13 @@
 
     <dialog id="help-dialog" class="glass-panel">
       <button class="dialog-close icon-button" aria-label="关闭使用说明">×</button><div class="eyebrow">WELCOME TO YOUR ORBIT</div><h2>把世界，握在手心。</h2>
-      <p>拖动地球附近的空白区域，探索你的空间标签页。</p><div class="help-grid"><div><b>01 / 收束与聚焦</b><p>地球附近上滚，卡片收成静止横列；下滚恢复。悬停卡片时，滚轮可缩放至 25%–180%，到达边界后继续滚动会回弹。</p></div><div><b>02 / 磁吸成组</b><p>按住卡片拖到另一张上面，停留半秒后自动建组。右键也可选择建组；拖到收藏夹停留半秒可收藏。</p></div><div><b>03 / 星群与管理</b><p>点击圆形星群，成员会分裂展开；点击空白或按 Esc 收起。右键可收藏、置顶、移出组或关闭。</p></div><div><b>04 / 新的世界</b><p>搜索框旁的收藏夹可悬停展开；点击收藏，新的卡片会分裂进入轨道。置顶卡片在横列右端完整显示。</p></div></div><p class="help-note">这是使用示例标签页的网页原型。所有铜管、磁吸和空间音效均为原创程序合成。进入后可打开真实网页。</p><button class="primary-button" id="start-exploring">开始探索 <span>↗</span></button>
+      <p>按住星球、土星环或周围空白处拖动，自由翻转；卡片上拖动用于分组。</p><div class="help-grid"><div><b>01 / 收束与聚焦</b><p>地球附近上滚，卡片收成静止横列；下滚恢复。悬停卡片时，滚轮可缩放至 25%–180%，到达边界后继续滚动会回弹。</p></div><div><b>02 / 磁吸成组</b><p>按住卡片拖到另一张上面，停留半秒后自动建组。右键也可选择建组；拖到收藏夹停留半秒可收藏。</p></div><div><b>03 / 星群与管理</b><p>点击圆形星群，成员会分裂展开；点击空白或按 Esc 收起。右键可收藏、置顶、移出组或关闭。</p></div><div><b>04 / 新的世界</b><p>搜索框旁的收藏夹可悬停展开；点击收藏，新的卡片会分裂进入轨道。置顶卡片在横列右端完整显示。</p></div></div><p class="help-note">这是使用示例标签页的网页原型。所有铜管、磁吸和空间音效均为原创程序合成。进入后可打开真实网页。</p><button class="primary-button" id="start-exploring">开始探索 <span>↗</span></button>
     </dialog>
     <section id="destination" aria-label="已进入的标签页" hidden></section>
     <div id="flight-layer" aria-hidden="true"></div>
     <div id="toast" role="status" aria-live="polite" hidden><span id="toast-message"></span><button id="toast-undo" hidden>撤销</button></div>
     <div id="loading" aria-live="polite"><span class="orbit-mark"></span><span>正在唤醒你的宇宙…</span></div>
   </div>
-  <script type="module" src="./orbit.js"></script>
+  <script type="module" src="./orbit.js?v=ring-arcball-2"></script>
 </body>
 </html>

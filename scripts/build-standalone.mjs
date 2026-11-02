@@ -18,7 +18,7 @@ function bundle(id){
   let source=read(id),exports=[];
   source=source.replace(/^import\s+(.+?)\s+from\s+['"](.+?)['"];?\r?$/gm,(_,binding,relative)=>{
     if(!relative.startsWith('.'))throw Error(`External dependency: ${relative}`);
-    const dependency=path.posix.normalize(path.posix.join(path.posix.dirname(id),relative));bundle(dependency);
+    const dependency=path.posix.normalize(path.posix.join(path.posix.dirname(id),relative.split('?')[0]));bundle(dependency);
     const value=`modules[${JSON.stringify(dependency)}]`;
     if(binding.startsWith('* as '))return `const ${binding.slice(5)}=${value};`;
     if(binding.startsWith('{'))return `const ${binding.replace(/\bas\b/g,':')}=${value};`;
@@ -37,9 +37,9 @@ new vm.Script(js,{filename:'standalone-bundle.js'});
 let html=read('index.html').replace('<link rel="icon" type="image/svg+xml" href="./assets/orbit.svg">',`<link rel="icon" type="image/svg+xml" href="${data('assets/orbit.svg','image/svg+xml')}">`);
 // Keep the downloadable file self-contained; the public Pages entry uses the
 // modular build so only the selected HD planet is fetched.
-html=html.replace('<head>','<head>\n<script>if(location.protocol==="https:"&&location.hostname==="lirenji2025.github.io")location.replace(new URL("dist/index.html",location.href).href);</script>');
-for(const name of ['style.css','v2.css'])html=html.replace(`<link rel="stylesheet" href="./${name}">`,`<style>\n${read(name).replaceAll('./assets/earth.jpg',earth)}\n</style>`);
-html=html.replace('<script type="module" src="./orbit.js"></script>',()=>`<!-- Three.js: MIT; see dist/assets/THREE-LICENSE.txt and CREDITS.md. -->\n<script>\n${js.replace(/<\/script/gi,'<\\/script')}\n</script>`);
+html=html.replace('<head>','<head>\n<script>if(location.protocol==="https:"&&location.hostname==="lirenji2025.github.io")location.replace(new URL("dist/index.html?v=ring-arcball-2",location.href).href);</script>');
+for(const name of ['style.css','v2.css'])html=html.replace(new RegExp('<link rel="stylesheet" href="\\./'+name+'(?:\\?[^\"]*)?">'),`<style>\n${read(name).replaceAll('./assets/earth.jpg',earth)}\n</style>`);
+html=html.replace(/<script type="module" src="\.\/orbit\.js(?:\?[^\"]*)?"><\/script>/,()=>`<!-- Three.js: MIT; see dist/assets/THREE-LICENSE.txt and CREDITS.md. -->\n<script>\n${js.replace(/<\/script/gi,'<\\/script')}\n</script>`);
 html=html.replace('href="./" aria-label="ORBIT 首页"','href="./index.html" aria-label="ORBIT 首页"');
 fs.writeFileSync(path.join(root,'index.html'),html);
 console.log(`Standalone index.html generated (${(Buffer.byteLength(html)/1024/1024).toFixed(2)} MB); scripts, styles, imagery and coastlines embedded.`);

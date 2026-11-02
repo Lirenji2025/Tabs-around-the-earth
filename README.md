@@ -25,7 +25,7 @@
 
 | 输入 | 响应与反馈 |
 | --- | --- |
-| 拖动星球附近空白处 | 旋转星球及标签轨道 |
+| 拖动星球、土星环或附近空白处 | 自由翻转星球与环；装饰文字区域不再挡住拖拽 |
 | 悬停卡片 | 放大高亮，其他卡片变暗、减速，播放轻微铜管音 |
 | 高亮时滚动 | 缩放至 25%–180%；在边界继续滚动会回弹 |
 | 点击卡片 | 镜头进入本地示例页面；可通过明确链接打开真实网站 |
@@ -56,7 +56,7 @@ node server.mjs
 打开 `http://127.0.0.1:4173` 查看模块化源码版本；`/standalone.html` 预览生成的单文件版本。
 
 ```sh
-node --test tests/model.test.mjs
+node --test tests/model.test.mjs tests/arcball.test.mjs
 node --check dist/orbit.js
 node scripts/build-standalone.mjs
 ```
@@ -75,7 +75,7 @@ node scripts/build-standalone.mjs
 | `dist/audio.js`, `trail.js` | 程序合成声效与短星座尾迹 |
 | `dist/assets/` | Three.js、许可证、地球纹理和地图数据 |
 | `scripts/build-standalone.mjs` | 无第三方依赖的单文件生成器 |
-| `tests/model.test.mjs` | 十项状态与布局测试 |
+| `tests/model.test.mjs` | 十三项状态、布局与自由旋转测试 |
 | `PROCESS.md`, `CREDITS.md` | 过程、真实反馈、AI 使用和素材来源 |
 
 ## 范围与限制

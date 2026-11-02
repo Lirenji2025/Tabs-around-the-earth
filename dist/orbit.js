@@ -2,7 +2,7 @@ import * as THREE from './assets/three.module.js';
 import {defaults,previewHTML,escapeHTML as esc} from './previews.js';
 import {normalizeState,entities,members,groupTogether,dissolveGroup,detachCard,removeEntity,togglePin,toggleFavorite,spawnFavorite,searchTarget,rowPositions,uid,reconcile} from './model.js';
 import {OrbitAudio} from './audio.js';
-import {createGlobe} from './globe.js';
+import {createGlobe} from './globe.js?v=ring-arcball-2';
 import {planets} from './planets.js';
 import {ConstellationTrail} from './trail.js';
 
@@ -156,14 +156,14 @@ $('#cancel-grouping').addEventListener('click',cancelGrouping);
 
 const universe=$('#universe');
 universe.addEventListener('pointerdown',ev=>{
-  if(ev.target.closest('.entity')||ev.button!==0||busy)return;closeMenu();audio.unlock();hovered=focused=null;worldDrag.active=true;worldDrag.moved=false;worldDrag.x=ev.clientX;worldDrag.y=ev.clientY;universe.setPointerCapture(ev.pointerId);universe.classList.add('dragging');
+  if(ev.target.closest('.entity')||ev.button!==0||busy)return;ev.preventDefault();closeMenu();audio.unlock();hovered=focused=null;worldDrag.active=true;worldDrag.moved=false;worldDrag.x=ev.clientX;worldDrag.y=ev.clientY;globe.beginDrag(ev.clientX,ev.clientY);universe.setPointerCapture(ev.pointerId);universe.classList.add('dragging');
 });
 universe.addEventListener('pointermove',ev=>{
   if(!worldDrag.active)return;const dx=ev.clientX-worldDrag.x,dy=ev.clientY-worldDrag.y;if(Math.abs(dx)+Math.abs(dy)>2)worldDrag.moved=true;
-  targetYaw+=dx*.006;targetPitch=clamp(targetPitch+dy*.003,-.55,.55);worldDrag.x=ev.clientX;worldDrag.y=ev.clientY;
+  globe.dragTo(ev.clientX,ev.clientY);targetYaw+=dx*.006;targetPitch=clamp(targetPitch+dy*.003,-.55,.55);worldDrag.x=ev.clientX;worldDrag.y=ev.clientY;
 });
-universe.addEventListener('pointerup',()=>{if(worldDrag.active&&!worldDrag.moved&&openGroup)collapseGroup();worldDrag.active=false;universe.classList.remove('dragging');});
-universe.addEventListener('pointercancel',()=>{worldDrag.active=false;universe.classList.remove('dragging');});
+universe.addEventListener('pointerup',()=>{if(worldDrag.active&&!worldDrag.moved&&openGroup)collapseGroup();globe.endDrag();worldDrag.active=false;universe.classList.remove('dragging');});
+universe.addEventListener('pointercancel',()=>{globe.endDrag();worldDrag.active=false;universe.classList.remove('dragging');});
 universe.addEventListener('contextmenu',ev=>{if(!ev.target.closest('.entity')){ev.preventDefault();closeMenu();}});
 universe.addEventListener('wheel',ev=>{
   ev.preventDefault();if(busy||drag.active)return;

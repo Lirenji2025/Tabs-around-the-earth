@@ -125,3 +125,14 @@ Developer verification of this revision: clicked Baidu and Google buttons, confi
 The root standalone HTML is rebuilt with embedded high-resolution maps, increasing its size from about 3.4 MB to about 41 MB. The modular hosted version loads the selected planet on demand; disposed and superseded texture loads are guarded to prevent a slower earlier choice from overwriting a newer selection.
 
 The rebuilt ~41 MB standalone HTTP preview also loaded its embedded 8K Mercury and Saturn maps successfully. The settings button flow worked there without a native select popup, with no console warnings/errors. GitHub Pages enters the modular build through an early redirect while the downloadable file stays self-contained for file-mode use.
+
+
+## 11. Repeat ring-drag failure — 2026-11-02
+
+The author reported that Saturn's ring still did not rotate. The prior developer check had shown a change in orientation but had not covered decorative UI regions overlapping the ring.
+
+During this follow-up, a real drag starting on the search-intro text over the lower ring selected page text and left the ring normal unchanged. This reproduced a concrete input-blocking case: the parent search area intercepted pointer input even outside its form. Decorative search/footer regions now pass pointer input to the universe, while the search form, engine menu and footer buttons remain interactive. Empty-space pointer-down prevents accidental text selection.
+
+The earlier limited yaw/pitch mapping was also replaced with quaternion arcball rotation. The planet, atmosphere and rings share this orientation. The hyperbolic continuation responds to radial drags beyond the planet disc, and repeated vertical drags can pass the previous pitch boundary. Module and stylesheet URLs carry a new version to avoid retaining the earlier cached implementation. Three regression tests cover outer-ring radial dragging, flips beyond the former pitch limit and drag-release behavior.
+
+Follow-up browser result: the previously blocked drag from (700,565) to (700,285) now changed the ring-plane normal from (-0.2589,0.8759,0.4071) to (-0.1749,0.8438,-0.5073). Repeating the same drag continued to (-0.1468,0.0609,-0.9873), visibly turning the ring nearly face-on. The search input remained editable and no console warnings/errors were observed. Before/after captures are ring-before.png and ring-after.png. These are developer checks; participant retesting has not been claimed.
