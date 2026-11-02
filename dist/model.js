@@ -14,7 +14,7 @@ export function normalizeState(saved,defaults){
   const groupSeen=new Set();const groups=(Array.isArray(saved?.groups)?saved.groups:[]).filter(g=>g&&typeof g.id==='string'&&!groupSeen.has(g.id)&&groupSeen.add(g.id)).map(g=>({id:g.id,name:typeof g.name==='string'?g.name.slice(0,40):'新星群'}));
   const favSeen=new Set();const favorites=(Array.isArray(saved?.favorites)?saved.favorites:[]).map(cleanCard).filter(c=>c&&!favSeen.has(c.url)&&favSeen.add(c.url)).slice(0,100).map(c=>({...c,groupId:null,pinned:false,zoom:1}));
   const p=saved?.preferences||saved||{};
-  const state={schema:2,cards,groups,favorites,preferences:{planet:['mercury','venus','earth','mars','jupiter','saturn','uranus','neptune'].includes(p.planet)?p.planet:'earth',sound:p.sound!==false,autoOrbit:p.autoOrbit!==false,reducedMotion:typeof p.reducedMotion==='boolean'?p.reducedMotion:null,engine:['Bing','Google','DuckDuckGo'].includes(p.engine)?p.engine:'Bing'}};
+  const state={schema:2,cards,groups,favorites,preferences:{planet:['mercury','venus','earth','mars','jupiter','saturn','uranus','neptune'].includes(p.planet)?p.planet:'earth',sound:p.sound!==false,autoOrbit:p.autoOrbit!==false,reducedMotion:typeof p.reducedMotion==='boolean'?p.reducedMotion:null,engine:['Bing','Google','Baidu','DuckDuckGo'].includes(p.engine)?p.engine:'Bing'}};
   reconcile(state);return state;
 }
 export function reconcile(state){
@@ -61,7 +61,7 @@ export function searchTarget(query,engine='Bing'){
   }
   if(/^[a-z][a-z\d+.-]*:/i.test(q))return null;
   if(/^[\w-]+(\.[\w-]+)+(\/[\S]*)?$/.test(q)){const u=new URL('https://'+q);return{url:u.href,domain:u.hostname,title:u.hostname.replace(/^www\./,''),kind:'web'};}
-  const base={Bing:'https://www.bing.com/search?q=',Google:'https://www.google.com/search?q=',DuckDuckGo:'https://duckduckgo.com/?q='}[engine]||'https://www.bing.com/search?q=';
+  const base={Baidu:'https://www.baidu.com/s?wd=',Bing:'https://www.bing.com/search?q=',Google:'https://www.google.com/search?q=',DuckDuckGo:'https://duckduckgo.com/?q='}[engine]||'https://www.bing.com/search?q=';
   return{url:base+encodeURIComponent(q),domain:new URL(base).hostname,title:q,query:q,kind:'search',engine};
 }
 export function rowPositions(list,width,height,focus=null){
